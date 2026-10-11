@@ -171,7 +171,7 @@
     
     ALTO_VENTANA: int
     
-    VELOCIDAD_MOVIMIENTO: double
+    VELOCIDAD_MOVIMIENTO: int
     
     INTERVALO_ANIMACION: int
     
@@ -443,7 +443,7 @@ classDiagram
     class ConstantesCliente {
         +ANCHO_VENTANA: int$
         +ALTO_VENTANA: int$
-        +VELOCIDAD_MOVIMIENTO: double$
+        +VELOCIDAD_MOVIMIENTO: int$
         +INTERVALO_ANIMACION: int$
         +ENCOUNTER_RADIUS: double$
     }
