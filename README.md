@@ -1,7 +1,5 @@
 # JungleAttackClient
 
-## Paquetes y clases
-
 ### jungleattack.cliente.aplicacion
 
 **AplicacionCliente**
