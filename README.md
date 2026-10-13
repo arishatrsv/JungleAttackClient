@@ -53,7 +53,7 @@ Se encarga de convertir los mensajes entre JSON y los objetos utilizados por el 
   - `zonasVisibles: List<ZonaVisible>`
   - `animalesVisibles: List<AnimalVisible>`
   - `tazasVisibles: List<TazaVisible>`
-  - `banderaVisible: BanderaVisible`
+  - `banderasVisibles: List<BanderaVisible>`
   - `resumen: ResumenVisible`
   - `observadores: List<ObservadorModelo>`
 
@@ -100,7 +100,7 @@ Representa visualmente un animal conocido por el cliente. Reutiliza los atributo
 
 ### BanderaVisible — hereda de `ElementoVisible`
 
-Representa la bandera que el cliente tiene permitido visualizar.
+Representa una bandera que el cliente tiene permitido visualizar.
 
 ### ZonaVisible — hereda de `common.model.Zona`
 
@@ -155,6 +155,14 @@ Contiene la información común de las especies, como su identificador y los dat
 El cliente utiliza esa información para representar las especies. Los recursos gráficos y la reproducción de efectos corresponden a la aplicación cliente.
 
 Las clases específicas de cada aplicación pueden heredar de estos modelos cuando necesiten atributos o comportamientos adicionales.
+
+## common.constantes
+
+### ConstantesComunes
+
+- Atributos estáticos: `ENCOUNTER_RADIUS: double`
+
+Contiene las constantes que deben tener el mismo valor en el cliente y en el servidor. El radio de encuentro lo usa el servidor para calcular los combates y el cliente para representar la animación.
 
 ## jungleattack.cliente.controlador
 
@@ -263,9 +271,8 @@ Administra las imágenes cargadas para evitar cargar repetidamente los mismos re
   - `ALTO_VENTANA: int`
   - `VELOCIDAD_MOVIMIENTO: int`
   - `INTERVALO_ANIMACION: int`
-  - `ENCOUNTER_RADIUS: double`
 
-Contiene las constantes utilizadas por la interfaz y la representación visual. Las reglas definitivas de combate y alcance corresponden al servidor.
+Contiene las constantes utilizadas por la interfaz y la representación visual. Las reglas definitivas de combate y alcance corresponden al servidor. El radio de encuentro (`ENCOUNTER_RADIUS`) se define en `ConstantesComunes`, en `common`.
 
 ## Herencia, interfaces y polimorfismo
 
@@ -283,6 +290,7 @@ Contiene las constantes utilizadas por la interfaz y la representación visual. 
 - `ConfiguracionCliente` contiene los datos de conexión con el servidor.
 - `CacheImagenes` comparte las imágenes cargadas mediante atributos y métodos estáticos.
 - `ConstantesCliente` contiene las constantes de la interfaz y la animación.
+- `ConstantesComunes`, en `common`, contiene las constantes compartidas con el servidor.
 
 ## Patrones de diseño
 
@@ -379,7 +387,7 @@ classDiagram
         -zonasVisibles: List~ZonaVisible~
         -animalesVisibles: List~AnimalVisible~
         -tazasVisibles: List~TazaVisible~
-        -banderaVisible: BanderaVisible
+        -banderasVisibles: List~BanderaVisible~
         -resumen: ResumenVisible
         -observadores: List~ObservadorModelo~
         +actualizacionEstado(estado)
@@ -575,6 +583,7 @@ classDiagram
     PantallaJuego --> ModeloJuego
     ControladorRaton --> PantallaJuego
     PantallaJuego ..> ConstantesCliente
+    PantallaJuego ..> ConstantesComunes
 
     class ConversorCoordenadas {
         +conversionPantallaAMapa()
@@ -594,6 +603,10 @@ classDiagram
         +ALTO_VENTANA: int$
         +VELOCIDAD_MOVIMIENTO: int$
         +INTERVALO_ANIMACION: int$
+    }
+
+    class ConstantesComunes {
+        <<common.constantes>>
         +ENCOUNTER_RADIUS: double$
     }
 
