@@ -12,6 +12,7 @@ import jungleattack.cliente.modelo.ZonaVisible;
 import jungleattack.cliente.protocolo.ConversorMensajes;
 import jungleattack.cliente.protocolo.Mensaje;
 import jungleattack.cliente.red.ConexionServidor;
+import java.util.ArrayList;
 
 /**
  * Controlador principal. Recibe lo que quiere hacer el usuario y lo manda al
@@ -53,14 +54,35 @@ public class ControladorJuego {
         hilo.start();
     }
 
-    public void unionPartida(String codigoPartida) {
-        // TODO: implementar (siguiente paso)
+public void unionPartida(String apodo, String codigoPartida) {
+    String apodoLimpio = apodo == null ? "" : apodo.trim();
+    String codigoLimpio = codigoPartida == null ? "" : codigoPartida.trim();
+    if (apodoLimpio.isEmpty()) {
+        modelo.actualizacionError(ConstantesProtocolo.MOTIVO_APODO_INVALIDO);
+        return;
     }
-
-    public void seleccionEspecie(Especie especie) {
-        // TODO: implementar
+    if (codigoLimpio.isEmpty()) {
+        modelo.actualizacionError(ConstantesProtocolo.MOTIVO_PARTIDA_NO_ENCONTRADA);
+        return;
     }
+    modelo.consultaJugadorLocal().actualizacionApodo(apodoLimpio);
+    Mensaje mensaje = ConversorMensajes.creacionMensaje(
+            ConstantesProtocolo.UNIR_PARTIDA,
+            ConstantesProtocolo.CAMPO_APODO, apodoLimpio,
+            ConstantesProtocolo.CAMPO_CODIGO, codigoLimpio);
+    conexionYEnvio(mensaje);
+}
 
+public void seleccionEspecie(Especie especie) {
+    if (especie == null) {
+        return;
+    }
+    Mensaje mensaje = ConversorMensajes.creacionMensaje(
+            ConstantesProtocolo.SELECCIONAR_ANIMAL,
+            ConstantesProtocolo.CAMPO_ESPECIE,
+            especie.consultaIdentificador());
+    conexionYEnvio(mensaje);
+}
     public void seleccionAnimales(List<AnimalVisible> animales) {
         // TODO: implementar
     }
@@ -76,7 +98,19 @@ public class ControladorJuego {
     public void consultaZona(ZonaVisible zona) {
         // TODO: implementar
     }
+    private void conexionYEnvio(Mensaje mensaje) {
+        Thread hilo = new Thread(() -> {
+            if (!conexion.conexion(this::procesamientoActualizacion)) {
+                SwingUtilities.invokeLater(() ->
+                        modelo.actualizacionError(ConstantesProtocolo.MOTIVO_SIN_CONEXION));
+                return;
+            }
+            conexion.envioMensaje(mensaje);
+        }, "conexion-envio");
 
+        hilo.setDaemon(true);
+        hilo.start();
+    }
     /**
      * Recibe un mensaje del servidor. Esto lo llama el hilo de red, y ese hilo no puede tocar Swing,
      * así que paso el trabajo al hilo de Swing con invokeLater. Ahí sí se puede cambiar el modelo

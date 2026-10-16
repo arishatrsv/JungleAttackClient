@@ -1,19 +1,20 @@
 package jungleattack.cliente.modelo;
 
+import common.model.Especie;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * El modelo del cliente: guarda lo que el jugador sabe de la partida y avisa a quienes lo observan
- * cuando algo cambia. Aquí uso el patrón Observer: ModeloJuego es el "sujeto" y las pantallas
- * (que implementan ObservadorModelo) son los "observadores". Así el modelo no sabe nada de la
- * interfaz y la vista no tiene lógica del juego.
+ * El modelo del cliente: guarda lo que el jugador conoce de la partida y avisa
+ * a quienes lo observan cuando algo cambia. Utiliza el patrón Observer para
+ * mantener separadas la lógica del modelo y la interfaz.
  *
- * El estado verdadero de la partida lo tiene el servidor. Esto es solo lo que el cliente conoce.
- *
- * En este paso solo está implementado lo de la fase, el jugador y los errores
+ * El estado verdadero de la partida lo tiene el servidor. Este modelo guarda
+ * únicamente la información que el cliente necesita mostrar.
  */
+
 public class ModeloJuego {
 
     // Fase actual de la aplicación (cada fase tiene su pantalla).
@@ -30,7 +31,12 @@ public class ModeloJuego {
 
     // CopyOnWriteArrayList: así se puede registrar un observador mientras se está notificando a los demás.
     private final List<ObservadorModelo> observadores = new CopyOnWriteArrayList<>();
-
+    
+    // Especies disponibles y elecciones de los jugadores.
+    private List<Especie> especiesDisponibles = new ArrayList<>();
+    private Especie especieOponente;
+    private boolean seleccionCompleta;
+    
     // Último error para mostrarle al jugador (es un código de ConstantesProtocolo). Es null si no hay.
     private String error;
 
@@ -47,6 +53,25 @@ public class ModeloJuego {
         notificacionObservadores();
     }
 
+    // Guarda la información de selección recibida del servidor.
+    public void actualizacionSeleccion(List<Especie> disponibles, Especie propia,
+            Especie oponente, boolean completa) {
+        this.especiesDisponibles = new ArrayList<>(disponibles);
+        this.jugadorLocal.actualizacionEspecie(propia);
+        this.especieOponente = oponente;
+        this.seleccionCompleta = completa;
+        this.fase = FaseCliente.SELECCION;
+        notificacionObservadores();
+    }
+
+    // Reinicia los datos de selección y vuelve al inicio.
+    public void reinicioPartida() {
+        this.fase = FaseCliente.INICIO;
+        this.jugadorLocal.reinicio();
+        this.especiesDisponibles = new ArrayList<>();
+        this.especieOponente = null;
+        this.seleccionCompleta = false;
+    }
     //Borra el error ya mostrado
     public void limpiezaError() {
         this.error = null;
@@ -90,5 +115,17 @@ public class ModeloJuego {
 
     public String consultaError() {
         return error;
+    }
+
+    public List<Especie> consultaEspeciesDisponibles() {
+        return List.copyOf(especiesDisponibles);
+    }
+
+    public Especie consultaEspecieOponente() {
+        return especieOponente;
+    }
+
+    public boolean consultaSeleccionCompleta() {
+        return seleccionCompleta;
     }
 }

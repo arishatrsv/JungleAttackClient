@@ -39,7 +39,7 @@ public class VentanaPrincipal extends JFrame implements ObservadorModelo {
         mostrarPantallaDeLaFase(); // la pantalla inicial según la fase inicial del modelo
     }
 
-    /** Cambia la pantalla que se ve: la dibuja y la pone dentro de la ventana. */
+    // Cambia la pantalla que se ve: la dibuja y la pone dentro de la ventana.
     public void cambioPantalla(PantallaBase pantalla) {
         pantallaActual = pantalla;
         pantalla.dibujo();
@@ -48,12 +48,12 @@ public class VentanaPrincipal extends JFrame implements ObservadorModelo {
         repaint();
     }
 
-    /** Muestra la ventana. */
+    // Muestra la ventana.
     public void visualizacion() {
         setVisible(true);
     }
 
-    /** El modelo cambió: muestro el error si hay y reviso si toca cambiar de pantalla. */
+    // El modelo cambió: muestro el error si hay y reviso si toca cambiar de pantalla.
     @Override
     public void actualizacionModelo() {
         String error = modelo.consultaError();
@@ -62,7 +62,12 @@ public class VentanaPrincipal extends JFrame implements ObservadorModelo {
             JOptionPane.showMessageDialog(this, textoDeError(error),
                     ConstantesCliente.TITULO_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-        mostrarPantallaDeLaFase();
+        FaseCliente fase = modelo.consultaFase();
+        if (fase != faseMostrada) {
+            mostrarPantallaDeLaFase();
+        } else if (pantallaActual != null) {
+            pantallaActual.dibujo(); // misma fase, pero los datos cambiaron: vuelvo a dibujar la pantalla
+        }
     }
 
     // Muestra la pantalla que corresponde a la fase actual, solo si la fase cambió.
@@ -74,8 +79,9 @@ public class VentanaPrincipal extends JFrame implements ObservadorModelo {
         switch (fase) {
             case INICIO -> cambioPantalla(new PantallaInicio(controlador));
             case ESPERA -> cambioPantalla(new PantallaEspera(modelo));
+            case SELECCION -> cambioPantalla(new PantallaSeleccion(modelo, controlador));
             default -> {
-                // TODO: pantallas de selección, juego y resumen (siguientes pasos)
+                // TODO: pantallas de juego y resumen (siguientes pasos)
             }
         }
         faseMostrada = fase;
@@ -88,6 +94,11 @@ public class VentanaPrincipal extends JFrame implements ObservadorModelo {
             case ConstantesProtocolo.MOTIVO_SIN_CONEXION -> ConstantesCliente.TEXTO_ERROR_SIN_CONEXION;
             case ConstantesProtocolo.MOTIVO_SERVIDOR_LLENO -> ConstantesCliente.TEXTO_ERROR_SERVIDOR_LLENO;
             case ConstantesProtocolo.MOTIVO_YA_EN_PARTIDA -> ConstantesCliente.TEXTO_ERROR_YA_EN_PARTIDA;
+            case ConstantesProtocolo.MOTIVO_PARTIDA_NO_ENCONTRADA -> ConstantesCliente.TEXTO_ERROR_PARTIDA_NO_ENCONTRADA;
+            case ConstantesProtocolo.MOTIVO_PARTIDA_LLENA -> ConstantesCliente.TEXTO_ERROR_PARTIDA_LLENA;
+            case ConstantesProtocolo.MOTIVO_ESPECIE_NO_DISPONIBLE -> ConstantesCliente.TEXTO_ERROR_ESPECIE_NO_DISPONIBLE;
+            case ConstantesProtocolo.MOTIVO_ESPECIE_YA_ELEGIDA -> ConstantesCliente.TEXTO_ERROR_ESPECIE_YA_ELEGIDA;
+            case ConstantesProtocolo.MOTIVO_OPONENTE_DESCONECTADO -> ConstantesCliente.TEXTO_ERROR_OPONENTE_DESCONECTADO;
             default -> ConstantesCliente.TEXTO_ERROR_GENERICO;
         };
     }
