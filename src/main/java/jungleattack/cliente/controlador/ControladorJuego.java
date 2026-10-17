@@ -67,7 +67,7 @@ public void unionPartida(String apodo, String codigoPartida) {
     }
     modelo.consultaJugadorLocal().actualizacionApodo(apodoLimpio);
     Mensaje mensaje = ConversorMensajes.creacionMensaje(
-            ConstantesProtocolo.UNIR_PARTIDA,
+            ConstantesProtocolo.UNIRSE_PARTIDA,
             ConstantesProtocolo.CAMPO_APODO, apodoLimpio,
             ConstantesProtocolo.CAMPO_CODIGO, codigoLimpio);
     conexionYEnvio(mensaje);
