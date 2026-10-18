@@ -45,24 +45,25 @@ public class ControladorJuego {
     }
 
 public void unionPartida(String apodo, String codigoPartida) {
-    String apodoLimpio = apodo == null ? “” : apodo.trim();
-    String codigoLimpio = codigoPartida == null ? “” : codigoPartida.trim();
+String apodoLimpio = apodo == null ? "" : apodo.trim();
+String codigoLimpio = codigoPartida == null ? "" : codigoPartida.trim();
 
-        if (apodoLimpio.isEmpty()) {
-            modelo.actualizacionError(ConstantesProtocolo.MOTIVO_APODO_INVALIDO);
-            return;
-        }
-        if (codigoLimpio.isEmpty()) {
-            modelo.actualizacionError(ConstantesProtocolo.MOTIVO_PARTIDA_NO_ENCONTRADA);
-            return;
-        }
-        modelo.consultaJugadorLocal().actualizacionApodo(apodoLimpio);
-        Mensaje mensaje = ConversorMensajes.creacionMensaje(
-                ConstantesProtocolo.UNIRSE_PARTIDA,
-                ConstantesProtocolo.CAMPO_APODO, apodoLimpio,
-                ConstantesProtocolo.CAMPO_CODIGO, codigoLimpio);
-        conexionYEnvio(mensaje);
+    if (apodoLimpio.isEmpty()) {
+        modelo.actualizacionError(ConstantesProtocolo.MOTIVO_APODO_INVALIDO);
+        return;
     }
+    if (codigoLimpio.isEmpty()) {
+        modelo.actualizacionError(ConstantesProtocolo.MOTIVO_PARTIDA_NO_ENCONTRADA);
+        return;
+    }
+    modelo.consultaJugadorLocal().actualizacionApodo(apodoLimpio);
+    Mensaje mensaje = ConversorMensajes.creacionMensaje(
+            ConstantesProtocolo.UNIRSE_PARTIDA,
+            ConstantesProtocolo.CAMPO_APODO, apodoLimpio,
+            ConstantesProtocolo.CAMPO_CODIGO, codigoLimpio);
+    conexionYEnvio(mensaje);
+}
+
     public void seleccionEspecie(Especie especie) {
         if (especie == null) {
             return;
@@ -114,12 +115,12 @@ public void unionPartida(String apodo, String codigoPartida) {
         SwingUtilities.invokeLater(() -> aplicacionActualizacion(mensaje));
     }
 
-// Aplica al modelo lo que dijo el servidor, según el tipo de mensaje.
-private void aplicacionActualizacion(Mensaje mensaje) {
-    switch (mensaje.consultaTipo()) {
-    case ConstantesProtocolo.PARTIDA_CREADA -> {
-    String codigo = ConversorMensajes.campoDelContenido(
-    mensaje, ConstantesProtocolo.CAMPO_CODIGO);
+    // Aplica al modelo lo que dijo el servidor, según el tipo de mensaje.
+    private void aplicacionActualizacion(Mensaje mensaje) {
+        switch (mensaje.consultaTipo()) {
+            case ConstantesProtocolo.PARTIDA_CREADA -> {
+                String codigo = ConversorMensajes.campoDelContenido(
+                        mensaje, ConstantesProtocolo.CAMPO_CODIGO);
 
                 modelo.consultaJugadorLocal().actualizacionCodigoPartida(codigo);
                 modelo.actualizacionEstado(FaseCliente.ESPERA);
@@ -148,6 +149,7 @@ private void aplicacionActualizacion(Mensaje mensaje) {
             }
         }
     }
+
     // Actualiza las especies disponibles y las elecciones de ambos jugadores.
     private void aplicacionSeleccion(Mensaje mensaje) {
         String disponiblesTexto = ConversorMensajes.campoDelContenido(

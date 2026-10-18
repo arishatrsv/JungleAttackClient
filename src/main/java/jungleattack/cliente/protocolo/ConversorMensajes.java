@@ -77,4 +77,18 @@ public class ConversorMensajes {
             return null; // contenido mal formado
         }
     }
+
+    /**
+     * Devuelve el contenido del mensaje como objeto JSON, para leer sus listas y objetos anidados
+     * (por ejemplo los animales de GAME_STARTED). campoDelContenido solo sirve para valores simples.
+     *
+     * @throws IllegalArgumentException si el contenido no es un objeto JSON válido
+     */
+    public static JsonObject contenidoComoObjeto(Mensaje mensaje) {
+        try {
+            return JsonParser.parseString(mensaje.consultaContenido()).getAsJsonObject();
+        } catch (RuntimeException e) {
+            throw new IllegalArgumentException("El contenido del mensaje no es un objeto JSON", e);
+        }
+    }
 }

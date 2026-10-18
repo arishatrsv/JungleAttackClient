@@ -2,7 +2,7 @@ package jungleattack.cliente.recursos;
 
 import com.github.weisj.jsvg.SVGDocument;
 import com.github.weisj.jsvg.parser.SVGLoader;
-import com.github.weisj.jsvg.attributes.ViewBox;
+import com.github.weisj.jsvg.view.ViewBox;
 import common.model.Especie;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -73,6 +73,20 @@ public class CacheImagenes {
         String nombre = especie.consultaIdentificador();
         cargaImagen(nombre, especie.consultaImagen(),
                 ConstantesCliente.TAMANO_IMAGEN_ESPECIE, ConstantesCliente.TAMANO_IMAGEN_ESPECIE);
+        return imagenPorNombre(nombre);
+    }
+
+    // Devuelve la imagen de una especie con el tamaño pedido (por ejemplo, más pequeña para dibujarla en el mapa).
+    // Cada tamaño se guarda por separado en la caché.
+    public static Image imagenDeEspecie(Especie especie, int tamano) {
+        String nombre = especie.consultaIdentificador() + "@" + tamano;
+        cargaImagen(nombre, especie.consultaImagen(), tamano, tamano);
+        return imagenPorNombre(nombre);
+    }
+
+    // Carga (si hace falta) y devuelve una imagen cualquiera de los recursos. Devuelve null si el archivo no existe.
+    public static Image imagenDeRecurso(String nombre, String ruta, int ancho, int alto) {
+        cargaImagen(nombre, ruta, ancho, alto);
         return imagenPorNombre(nombre);
     }
 }

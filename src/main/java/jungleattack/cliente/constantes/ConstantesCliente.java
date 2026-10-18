@@ -1,5 +1,7 @@
 package jungleattack.cliente.constantes;
 
+import java.awt.Color;
+
 /**
  * Constantes de la interfaz y la representación visual
  * Las reglas definitivas de combate y alcance son del servidor.
@@ -47,4 +49,59 @@ public class ConstantesCliente {
     // Tamaño de la imagen de cada animal y cantidad de columnas.
     public static final int TAMANO_IMAGEN_ESPECIE = 96;
     public static final int COLUMNAS_SELECCION = 4;
+
+    // Campos de mapa.json que solo usa el cliente (el servidor no dibuja los nombres de las zonas)
+    public static final String CAMPO_ETIQUETA = "etiqueta";
+    public static final String CAMPO_ETIQUETA_X = "x";
+    public static final String CAMPO_ETIQUETA_Y = "y";
+    public static final String CAMPO_ETIQUETA_ANCLAJE = "anclaje";
+
+    // Imágenes de la pantalla de juego (ruta dentro de los recursos y nombre con el que se guarda en la caché)
+    public static final String RUTA_FONDO_MAPA = "imagenes/mapa/mapa_fondo.svg";
+    public static final String RUTA_BANDERA_PROPIA = "imagenes/objetos/bandera_jugador1.svg";
+    public static final String RUTA_BANDERA_OPONENTE = "imagenes/objetos/bandera_jugador2.svg";
+    public static final String RUTA_TAZA = "imagenes/objetos/taza_cafe.svg";
+    public static final String NOMBRE_FONDO_MAPA = "fondo_mapa";
+    public static final String NOMBRE_BANDERA_PROPIA = "bandera_propia";
+    public static final String NOMBRE_BANDERA_OPONENTE = "bandera_oponente";
+    public static final String NOMBRE_TAZA = "taza";
+    // Tamaños en el mapa (en las unidades de mapa.json, antes de ajustar a la ventana)
+    public static final int TAMANO_ANIMAL_MAPA = 30;
+    public static final int ANCHO_BANDERA_MAPA = 44;
+    public static final int ALTO_BANDERA_MAPA = 62; // misma proporción que el SVG (64 x 90)
+    public static final int TAMANO_TAZA_MAPA = 28;
+    public static final int RADIO_NODO = 8;
+    public static final float GROSOR_CAMINO = 6f;
+    public static final int ALTO_BARRA_ENERGIA = 4;
+    public static final int ANCHO_BARRA_ENERGIA = 22;
+    public static final float GROSOR_ANILLO = 2.5f;
+    public static final int MARGEN_HUD = 10;
+    public static final int RELLENO_HUD = 8;
+    public static final int ARCO_HUD = 12;
+    public static final int TAMANO_FUENTE_ZONA = 13;
+    public static final int TAMANO_FUENTE_HUD = 15;
+    // Las imágenes se rasterizan más grandes de lo que se muestran, para que se vean bien al agrandar la ventana
+    public static final int FACTOR_CALIDAD_IMAGEN = 2;
+    // Colores de la pantalla de juego
+    public static final Color COLOR_FONDO_JUEGO = new Color(20, 30, 20);
+    public static final Color COLOR_CAMINO = new Color(150, 110, 60);
+    public static final Color COLOR_BORDE_CAMINO = new Color(60, 40, 20, 200);
+    public static final Color COLOR_NODO = new Color(245, 235, 200);
+    public static final Color COLOR_NODO_BORDE = new Color(70, 50, 25);
+    public static final Color COLOR_TEXTO_ZONA = Color.WHITE;
+    public static final Color COLOR_SOMBRA_TEXTO = new Color(0, 0, 0, 200);
+    public static final Color COLOR_NIEBLA = new Color(10, 15, 20, 225); // zonas que el jugador no ve
+    public static final Color COLOR_NIEBLA_SUAVE = new Color(10, 15, 20, 110); // zonas que ve pero no está mirando ahora
+    public static final Color COLOR_ANILLO_PROPIO = new Color(80, 220, 120);
+    public static final Color COLOR_ANILLO_OPONENTE = new Color(240, 90, 90);
+    public static final Color COLOR_ANILLO_BOT = new Color(240, 190, 60);
+    public static final Color COLOR_BARRA_FONDO = new Color(40, 40, 40, 200);
+    public static final Color COLOR_BARRA_ENERGIA = new Color(90, 220, 90);
+    public static final Color COLOR_PANEL_HUD = new Color(0, 0, 0, 150);
+    public static final Color COLOR_TEXTO_HUD = Color.WHITE;
+    // Textos de la pantalla de juego
+    public static final String TEXTO_JUEGO_ZONA = "Zona: ";
+    public static final String TEXTO_JUEGO_DANIO = "Daño: ";
+    public static final String TEXTO_JUEGO_ANIMALES = "Animales: ";
+    public static final String TEXTO_JUEGO_SEPARADOR = "   |   ";
 }
