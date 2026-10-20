@@ -3,7 +3,9 @@ package jungleattack.cliente.modelo;
 import common.model.Especie;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -35,6 +37,8 @@ public class ModeloJuego {
     // La zona que se está mirando ahora: el jugador ve una zona a la vez, entre las que tiene visibles.
     private int zonaObservada;
     private int danio;
+    // Identificadores de los animales propios que el jugador tiene seleccionados con el ratón.
+    private final List<String> animalesSeleccionados = new ArrayList<>();
 
     // CopyOnWriteArrayList: así se puede registrar un observador mientras se está notificando a los demás.
     private final List<ObservadorModelo> observadores = new CopyOnWriteArrayList<>();
@@ -82,6 +86,31 @@ public class ModeloJuego {
         this.mapa = mapa;
         this.zonaInicial = zonaInicial;
         this.zonaObservada = zonaInicial;
+        this.animalesVisibles.clear();
+        this.animalesSeleccionados.clear();
+        aplicacionEstadoVisible(danio, idsZonasVisibles, animales, tazas, banderas);
+        this.fase = FaseCliente.JUEGO;
+        notificacionObservadores();
+    }
+
+    /**
+     * Reemplaza lo que el jugador ve por la última foto que mandó el servidor (STATE_UPDATE): las zonas visibles
+     * y todo lo que hay en ellas. Los animales que ya se conocían conservan su posición dibujada, para que el
+     * movimiento se vea fluido. Si el animal ya no se ve (o murió) deja de estar seleccionado, y si la zona
+     * que se miraba dejó de ser visible se pasa a mirar otra. Si la partida no está en curso se ignora.
+     */
+    public void actualizacionEstadoVisible(int danio, List<Integer> idsZonasVisibles, List<AnimalVisible> animales,
+            List<TazaVisible> tazas, List<BanderaVisible> banderas) {
+        if (mapa == null || fase != FaseCliente.JUEGO) {
+            return;
+        }
+        aplicacionEstadoVisible(danio, idsZonasVisibles, animales, tazas, banderas);
+        notificacionObservadores();
+    }
+
+    // Lo común de GAME_STARTED y STATE_UPDATE. No avisa a los observadores: lo hace quien lo llama.
+    private void aplicacionEstadoVisible(int danio, List<Integer> idsZonasVisibles, List<AnimalVisible> animales,
+            List<TazaVisible> tazas, List<BanderaVisible> banderas) {
         this.danio = danio;
         this.zonasVisibles.clear();
         for (int identificador : idsZonasVisibles) {
@@ -90,14 +119,93 @@ public class ModeloJuego {
                 this.zonasVisibles.add(zona);
             }
         }
+
+        // Los animales que ya estaban se actualizan en lugar de reemplazarse, para no perder su posición dibujada.
+        Map<String, AnimalVisible> conocidos = new HashMap<>();
+        for (AnimalVisible animal : animalesVisibles) {
+            conocidos.put(animal.consultaIdentificador(), animal);
+        }
+        List<AnimalVisible> actualizados = new ArrayList<>();
+        for (AnimalVisible recibido : animales) {
+            AnimalVisible conocido = conocidos.get(recibido.consultaIdentificador());
+            if (conocido != null && conocido.consultaPropio() == recibido.consultaPropio()) {
+                conocido.actualizacionDesdeServidor(recibido.consultaEnergia(), recibido.consultaPosicion());
+                actualizados.add(conocido);
+            } else {
+                actualizados.add(recibido);
+            }
+        }
         this.animalesVisibles.clear();
-        this.animalesVisibles.addAll(animales);
+        this.animalesVisibles.addAll(actualizados);
         this.tazasVisibles.clear();
         this.tazasVisibles.addAll(tazas);
         this.banderasVisibles.clear();
         this.banderasVisibles.addAll(banderas);
-        this.fase = FaseCliente.JUEGO;
+
+        // Solo se pueden tener seleccionados animales propios que se sigan viendo.
+        animalesSeleccionados.removeIf(id -> {
+            for (AnimalVisible animal : animalesVisibles) {
+                if (animal.consultaIdentificador().equals(id) && animal.consultaPropio()) {
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        // Si la zona que se miraba ya no es visible, se pasa a mirar la primera zona visible.
+        boolean observadaVisible = false;
+        for (ZonaVisible zona : zonasVisibles) {
+            observadaVisible |= zona.consultaIdentificador() == zonaObservada;
+        }
+        if (!observadaVisible && !zonasVisibles.isEmpty()) {
+            zonaObservada = zonasVisibles.get(0).consultaIdentificador();
+        }
+    }
+
+    /**
+     * Cambia los animales seleccionados. Se ignoran los identificadores que no sean de un animal propio visible.
+     */
+    public void actualizacionAnimalesSeleccionados(List<String> identificadores) {
+        animalesSeleccionados.clear();
+        for (String identificador : identificadores) {
+            for (AnimalVisible animal : animalesVisibles) {
+                if (animal.consultaIdentificador().equals(identificador) && animal.consultaPropio()
+                        && !animalesSeleccionados.contains(identificador)) {
+                    animalesSeleccionados.add(identificador);
+                }
+            }
+        }
         notificacionObservadores();
+    }
+
+    // Los animales vivos que están en la zona que se está mirando (son los que se dibujan y se pueden tomar con el ratón).
+    public List<AnimalVisible> consultaAnimalesEnZonaObservada() {
+        List<AnimalVisible> enZona = new ArrayList<>();
+        if (mapa == null) {
+            return enZona;
+        }
+        for (AnimalVisible animal : animalesVisibles) {
+            ZonaVisible zona = mapa.zonaPorPosicion(animal.consultaPosicion());
+            if (animal.consultaVida() && zona != null && zona.consultaIdentificador() == zonaObservada) {
+                enZona.add(animal);
+            }
+        }
+        return enZona;
+    }
+
+    public boolean consultaSeleccionado(AnimalVisible animal) {
+        return animalesSeleccionados.contains(animal.consultaIdentificador());
+    }
+
+    // Los animales que el jugador tiene seleccionados ahora.
+    public List<AnimalVisible> consultaAnimalesSeleccionados() {
+        List<AnimalVisible> seleccionados = new ArrayList<>();
+        for (AnimalVisible animal : animalesVisibles) {
+            if (animalesSeleccionados.contains(animal.consultaIdentificador())) {
+                seleccionados.add(animal);
+            }
+        }
+        return seleccionados;
     }
 
     /**
@@ -129,6 +237,7 @@ public class ModeloJuego {
         this.danio = 0;
         this.zonasVisibles.clear();
         this.animalesVisibles.clear();
+        this.animalesSeleccionados.clear();
         this.tazasVisibles.clear();
         this.banderasVisibles.clear();
         this.resumen = null;

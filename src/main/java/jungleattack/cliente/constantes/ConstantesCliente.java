@@ -65,6 +65,7 @@ public class ConstantesCliente {
     public static final String NOMBRE_BANDERA_PROPIA = "bandera_propia";
     public static final String NOMBRE_BANDERA_OPONENTE = "bandera_oponente";
     public static final String NOMBRE_TAZA = "taza";
+
     // Tamaños en el mapa (en las unidades de mapa.json, antes de ajustar a la ventana)
     public static final int TAMANO_ANIMAL_MAPA = 30;
     public static final int ANCHO_BANDERA_MAPA = 44;
@@ -82,6 +83,7 @@ public class ConstantesCliente {
     public static final int TAMANO_FUENTE_HUD = 15;
     // Las imágenes se rasterizan más grandes de lo que se muestran, para que se vean bien al agrandar la ventana
     public static final int FACTOR_CALIDAD_IMAGEN = 2;
+
     // Colores de la pantalla de juego
     public static final Color COLOR_FONDO_JUEGO = new Color(20, 30, 20);
     public static final Color COLOR_CAMINO = new Color(150, 110, 60);
@@ -99,9 +101,20 @@ public class ConstantesCliente {
     public static final Color COLOR_BARRA_ENERGIA = new Color(90, 220, 90);
     public static final Color COLOR_PANEL_HUD = new Color(0, 0, 0, 150);
     public static final Color COLOR_TEXTO_HUD = Color.WHITE;
+
     // Textos de la pantalla de juego
     public static final String TEXTO_JUEGO_ZONA = "Zona: ";
     public static final String TEXTO_JUEGO_DANIO = "Daño: ";
     public static final String TEXTO_JUEGO_ANIMALES = "Animales: ";
     public static final String TEXTO_JUEGO_SEPARADOR = "   |   ";
+
+    // Selección y movimiento con el ratón
+    public static final int DISTANCIA_MINIMA_ARRASTRE = 5; // píxeles: menos que esto es un clic, más es un rectángulo de selección
+    public static final int RADIO_CLIC_ANIMAL = 18; // unidades de mapa: qué tan cerca debe caer el clic de un animal para tomarlo
+    public static final int TIEMPO_SUAVIZADO_MS = 80; // en este tiempo un animal dibujado recorre casi todo el camino hasta su posición real
+    public static final Color COLOR_ANILLO_SELECCION = new Color(255, 235, 90);
+    public static final float GROSOR_ANILLO_SELECCION = 3.5f;
+    public static final Color COLOR_RECTANGULO_SELECCION = new Color(255, 235, 90, 70);
+    public static final Color COLOR_BORDE_RECTANGULO_SELECCION = new Color(255, 235, 90, 220);
+    public static final String TEXTO_JUEGO_SELECCIONADOS = "Seleccionados: ";
 }

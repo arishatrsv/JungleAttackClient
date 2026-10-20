@@ -8,10 +8,13 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Polygon;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.geom.Line2D;
 import javax.swing.Timer;
 import jungleattack.cliente.constantes.ConstantesCliente;
+import jungleattack.cliente.controlador.ControladorJuego;
+import jungleattack.cliente.controlador.ControladorRaton;
 import jungleattack.cliente.modelo.AnimalVisible;
 import jungleattack.cliente.modelo.BanderaVisible;
 import jungleattack.cliente.modelo.CaminoVisible;
@@ -36,11 +39,33 @@ public class PantallaJuego extends PantallaBase implements ObservadorModelo {
     private final ModeloJuego modelo;
     private final ConversorCoordenadas conversor = new ConversorCoordenadas();
     private Timer temporizadorAnimacion;
+    // Instante (milisegundos) del cuadro anterior de la animación, para saber cuánto tiempo pasó.
+    private long ultimoCuadro;
+    // Rectángulo que el jugador está arrastrando para seleccionar animales (en píxeles); null si no hay.
+    private Rectangle rectanguloSeleccion;
 
-    public PantallaJuego(ModeloJuego modelo) {
+    /**
+     * @param controlador a quien se le avisan la selección y las órdenes del ratón (puede ser null en pruebas:
+     *                    entonces el ratón no envía nada)
+     */
+    public PantallaJuego(ModeloJuego modelo, ControladorJuego controlador) {
         this.modelo = modelo;
         setOpaque(true);
         setBackground(ConstantesCliente.COLOR_FONDO_JUEGO);
+        ControladorRaton raton = new ControladorRaton(modelo, this, controlador);
+        addMouseListener(raton);
+        addMouseMotionListener(raton);
+    }
+
+    // Lo usa el ratón para convertir los píxeles de la ventana en puntos del mapa.
+    public ConversorCoordenadas consultaConversor() {
+        return conversor;
+    }
+
+    // Se llama mientras el jugador arrastra para seleccionar. Con null se borra el rectángulo.
+    public void actualizacionRectanguloSeleccion(Rectangle rectangulo) {
+        this.rectanguloSeleccion = rectangulo;
+        repaint();
     }
 
     @Override
@@ -57,6 +82,7 @@ public class PantallaJuego extends PantallaBase implements ObservadorModelo {
     @Override
     public void addNotify() {
         super.addNotify();
+        ultimoCuadro = System.currentTimeMillis();
         temporizadorAnimacion = new Timer(ConstantesCliente.INTERVALO_ANIMACION, evento -> actualizacionAnimacion());
         temporizadorAnimacion.start();
     }
@@ -69,7 +95,18 @@ public class PantallaJuego extends PantallaBase implements ObservadorModelo {
         super.removeNotify();
     }
 
+    /**
+     * Un cuadro de la animación: acerca cada animal dibujado a su posición real y repinta.
+     * Si pasó mucho tiempo desde el cuadro anterior (por ejemplo, la ventana estuvo detenida) se cuenta solo
+     * un máximo, para que los animales no den un salto brusco.
+     */
     public void actualizacionAnimacion() {
+        long ahora = System.currentTimeMillis();
+        long transcurrido = Math.max(0, Math.min(ahora - ultimoCuadro, 200));
+        ultimoCuadro = ahora;
+        for (AnimalVisible animal : modelo.consultaAnimalesVisibles()) {
+            animal.actualizacionVisual(transcurrido);
+        }
         repaint();
     }
 
@@ -102,10 +139,11 @@ public class PantallaJuego extends PantallaBase implements ObservadorModelo {
             g2.dispose();
         }
 
-        // El panel de información va en píxeles de la ventana, sin escalar.
+        // El rectángulo de selección y el panel de información van en píxeles de la ventana, sin escalar.
         Graphics2D hud = (Graphics2D) g.create();
         try {
             ajusteCalidad(hud);
+            dibujoRectanguloSeleccion(hud);
             dibujoPanelInformacion(hud, mapa);
         } finally {
             hud.dispose();
@@ -225,11 +263,8 @@ public class PantallaJuego extends PantallaBase implements ObservadorModelo {
                 dibujoTaza(g2, taza);
             }
         }
-        for (AnimalVisible animal : modelo.consultaAnimalesVisibles()) {
-            ZonaVisible zona = mapa.zonaPorPosicion(animal.consultaPosicion());
-            if (animal.consultaVida() && zona != null && zona.consultaIdentificador() == observada) {
-                dibujoAnimal(g2, animal);
-            }
+        for (AnimalVisible animal : modelo.consultaAnimalesEnZonaObservada()) {
+            dibujoAnimal(g2, animal);
         }
     }
 
@@ -261,12 +296,19 @@ public class PantallaJuego extends PantallaBase implements ObservadorModelo {
     // Un animal se dibuja con un anillo (verde propio, rojo del oponente, amarillo bot) y su barra de energía.
     private void dibujoAnimal(Graphics2D g2, AnimalVisible animal) {
         int tamano = ConstantesCliente.TAMANO_ANIMAL_MAPA;
-        int x = animal.consultaPosicion().consultaPosicionX() - tamano / 2;
-        int y = animal.consultaPosicion().consultaPosicionY() - tamano / 2;
+        // Se dibuja en la posición suavizada, no en la última que llegó del servidor.
+        int x = (int) Math.round(animal.consultaVisualX()) - tamano / 2;
+        int y = (int) Math.round(animal.consultaVisualY()) - tamano / 2;
 
         g2.setColor(colorAnillo(animal));
         g2.setStroke(new BasicStroke(ConstantesCliente.GROSOR_ANILLO));
         g2.drawOval(x, y, tamano, tamano);
+        if (modelo.consultaSeleccionado(animal)) {
+            // Un animal seleccionado se resalta con un anillo más grande y de otro color.
+            g2.setColor(ConstantesCliente.COLOR_ANILLO_SELECCION);
+            g2.setStroke(new BasicStroke(ConstantesCliente.GROSOR_ANILLO_SELECCION));
+            g2.drawOval(x - 3, y - 3, tamano + 6, tamano + 6);
+        }
 
         Especie especie = animal.consultaEspecie();
         Image imagen = especie == null ? null
@@ -297,6 +339,17 @@ public class PantallaJuego extends PantallaBase implements ObservadorModelo {
         return animal.consultaPropio() ? ConstantesCliente.COLOR_ANILLO_PROPIO : ConstantesCliente.COLOR_ANILLO_OPONENTE;
     }
 
+    private void dibujoRectanguloSeleccion(Graphics2D g2) {
+        if (rectanguloSeleccion == null) {
+            return;
+        }
+        g2.setColor(ConstantesCliente.COLOR_RECTANGULO_SELECCION);
+        g2.fill(rectanguloSeleccion);
+        g2.setColor(ConstantesCliente.COLOR_BORDE_RECTANGULO_SELECCION);
+        g2.setStroke(new BasicStroke(1.5f));
+        g2.draw(rectanguloSeleccion);
+    }
+
     // Franja de información arriba a la izquierda: zona que se mira, daño de la manada y animales propios.
     private void dibujoPanelInformacion(Graphics2D g2, MapaCliente mapa) {
         ZonaVisible zona = mapa.zonaPorIdentificador(modelo.consultaZonaObservada());
@@ -308,7 +361,9 @@ public class PantallaJuego extends PantallaBase implements ObservadorModelo {
         }
         String texto = ConstantesCliente.TEXTO_JUEGO_ZONA + (zona == null ? "" : zona.consultaNombre())
                 + ConstantesCliente.TEXTO_JUEGO_SEPARADOR + ConstantesCliente.TEXTO_JUEGO_DANIO + modelo.consultaDanio()
-                + ConstantesCliente.TEXTO_JUEGO_SEPARADOR + ConstantesCliente.TEXTO_JUEGO_ANIMALES + propios;
+                + ConstantesCliente.TEXTO_JUEGO_SEPARADOR + ConstantesCliente.TEXTO_JUEGO_ANIMALES + propios
+                + ConstantesCliente.TEXTO_JUEGO_SEPARADOR + ConstantesCliente.TEXTO_JUEGO_SELECCIONADOS
+                + modelo.consultaAnimalesSeleccionados().size();
 
         g2.setFont(g2.getFont().deriveFont(Font.BOLD, (float) ConstantesCliente.TAMANO_FUENTE_HUD));
         FontMetrics medidas = g2.getFontMetrics();

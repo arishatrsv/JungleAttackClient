@@ -40,7 +40,7 @@ class PantallaJuegoTest {
 
     // Dibuja la pantalla en una imagen del tamaño del mapa (la escala queda en 1) y la devuelve.
     private BufferedImage dibujar(ModeloJuego modelo) {
-        PantallaJuego pantalla = new PantallaJuego(modelo);
+        PantallaJuego pantalla = new PantallaJuego(modelo, null);
         pantalla.setSize(ANCHO, ALTO);
         BufferedImage imagen = new BufferedImage(ANCHO, ALTO, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = imagen.createGraphics();
@@ -106,8 +106,53 @@ class PantallaJuegoTest {
 
     @Test
     void elTemporizadorDeLaAnimacionSoloCorreConLaPantallaEnLaVentana() {
-        PantallaJuego pantalla = new PantallaJuego(modeloEnJuego());
+        PantallaJuego pantalla = new PantallaJuego(modeloEnJuego(), null);
         pantalla.actualizacionAnimacion(); // repintar sin estar en una ventana no debe fallar
         pantalla.removeNotify(); // quitarla sin haberla agregado tampoco
+    }
+
+    @Test
+    void unAnimalSeleccionadoSeDibujaConUnAnilloAmarillo() {
+        ModeloJuego modelo = modeloEnJuego();
+        BufferedImage sinSeleccion = dibujar(modelo);
+        modelo.actualizacionAnimalesSeleccionados(List.of("jaguar-1"));
+        BufferedImage conSeleccion = dibujar(modelo);
+
+        // El animal está en (x + 30, y) de la zona 12; el anillo de selección queda a unas 18 unidades de su centro.
+        ZonaVisible zona = modelo.consultaMapa().zonaPorIdentificador(12);
+        int x = zona.consultaPosicion().consultaPosicionX() + 30;
+        int y = zona.consultaPosicion().consultaPosicionY();
+        boolean cambio = false;
+        for (int dx = -ConstantesCliente.TAMANO_ANIMAL_MAPA; dx <= ConstantesCliente.TAMANO_ANIMAL_MAPA && !cambio; dx++) {
+            cambio = sinSeleccion.getRGB(x + dx, y) != conSeleccion.getRGB(x + dx, y);
+        }
+        assertTrue(cambio, "al seleccionar el animal el dibujo debe cambiar a su alrededor");
+    }
+
+    @Test
+    void elRectanguloDeSeleccionSeDibujaYSeBorra() {
+        ModeloJuego modelo = modeloEnJuego();
+        PantallaJuego pantalla = new PantallaJuego(modelo, null);
+        pantalla.setSize(ANCHO, ALTO);
+        pantalla.actualizacionRectanguloSeleccion(new java.awt.Rectangle(100, 100, 50, 50));
+        BufferedImage imagen = new BufferedImage(ANCHO, ALTO, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = imagen.createGraphics();
+        pantalla.print(g);
+        int conRectangulo = imagen.getRGB(125, 125);
+        pantalla.actualizacionRectanguloSeleccion(null);
+        pantalla.print(g);
+        g.dispose();
+        assertNotEquals(conRectangulo, imagen.getRGB(125, 125));
+    }
+
+    @Test
+    void laAnimacionAcercaLosAnimalesDibujadosASuPosicionReal() {
+        ModeloJuego modelo = modeloEnJuego();
+        AnimalVisible animal = modelo.consultaAnimalesVisibles().get(0);
+        double antes = animal.consultaVisualX();
+        animal.actualizacionPosicion(new PuntoVisible(animal.consultaPosicion().consultaPosicionX() + 40, animal.consultaPosicion().consultaPosicionY()));
+        PantallaJuego pantalla = new PantallaJuego(modelo, null);
+        pantalla.actualizacionAnimacion();
+        assertTrue(animal.consultaVisualX() >= antes);
     }
 }
