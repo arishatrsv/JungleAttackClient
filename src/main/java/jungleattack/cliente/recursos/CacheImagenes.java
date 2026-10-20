@@ -2,7 +2,7 @@ package jungleattack.cliente.recursos;
 
 import com.github.weisj.jsvg.SVGDocument;
 import com.github.weisj.jsvg.parser.SVGLoader;
-import com.github.weisj.jsvg.view.ViewBox;
+import com.github.weisj.jsvg.attributes.ViewBox;
 import common.model.Especie;
 import java.awt.Graphics2D;
 import java.awt.Image;

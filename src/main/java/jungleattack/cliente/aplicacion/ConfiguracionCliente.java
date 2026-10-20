@@ -7,5 +7,5 @@ public class ConfiguracionCliente {
 
     public static final String HOST_SERVIDOR = "localhost";
 
-    public static final int PUERTO_SERVIDOR = 5000;
+    public static final int PUERTO_SERVIDOR = 5001;
 }
