@@ -350,7 +350,7 @@ public class PantallaJuego extends PantallaBase implements ObservadorModelo {
         g2.draw(rectanguloSeleccion);
     }
 
-    // Franja de información arriba a la izquierda: zona que se mira, daño de la manada y animales propios.
+    // Franja de información arriba a la izquierda: zona que se mira, daño de la manada, tazas consumidas, animales propios y seleccionados.
     private void dibujoPanelInformacion(Graphics2D g2, MapaCliente mapa) {
         ZonaVisible zona = mapa.zonaPorIdentificador(modelo.consultaZonaObservada());
         int propios = 0;
@@ -361,6 +361,7 @@ public class PantallaJuego extends PantallaBase implements ObservadorModelo {
         }
         String texto = ConstantesCliente.TEXTO_JUEGO_ZONA + (zona == null ? "" : zona.consultaNombre())
                 + ConstantesCliente.TEXTO_JUEGO_SEPARADOR + ConstantesCliente.TEXTO_JUEGO_DANIO + modelo.consultaDanio()
+                + ConstantesCliente.TEXTO_JUEGO_SEPARADOR + ConstantesCliente.TEXTO_JUEGO_TAZAS + modelo.consultaTazasConsumidas()
                 + ConstantesCliente.TEXTO_JUEGO_SEPARADOR + ConstantesCliente.TEXTO_JUEGO_ANIMALES + propios
                 + ConstantesCliente.TEXTO_JUEGO_SEPARADOR + ConstantesCliente.TEXTO_JUEGO_SELECCIONADOS
                 + modelo.consultaAnimalesSeleccionados().size();

@@ -214,6 +214,7 @@ public void seleccionEspecie(Especie especie) {
             JsonObject contenido = ConversorMensajes.contenidoComoObjeto(mensaje);
             MapaCliente mapa = MapaCliente.cargaDesdeRecurso();
             FotoVisible foto = lecturaFoto(contenido);
+            modelo.actualizacionTazasConsumidas(foto.tazasConsumidas);
             modelo.actualizacionInicio(mapa, contenido.get(ConstantesProtocolo.CAMPO_ZONA_INICIAL).getAsInt(),
                     foto.danio, foto.zonasVisibles, foto.animales, foto.tazas, foto.banderas);
         } catch (RuntimeException e) {
@@ -230,6 +231,7 @@ public void seleccionEspecie(Especie especie) {
     private void aplicacionEstado(Mensaje mensaje) {
         try {
             FotoVisible foto = lecturaFoto(ConversorMensajes.contenidoComoObjeto(mensaje));
+            modelo.actualizacionTazasConsumidas(foto.tazasConsumidas);
             modelo.actualizacionEstadoVisible(foto.danio, foto.zonasVisibles, foto.animales, foto.tazas, foto.banderas);
         } catch (RuntimeException e) {
             // Se ignora esta foto.
@@ -239,6 +241,7 @@ public void seleccionEspecie(Especie especie) {
     // Lo que tienen en común GAME_STARTED y STATE_UPDATE, ya leído del JSON.
     private static class FotoVisible {
         private int danio;
+        private int tazasConsumidas;
         private final List<Integer> zonasVisibles = new ArrayList<>();
         private final List<AnimalVisible> animales = new ArrayList<>();
         private final List<TazaVisible> tazas = new ArrayList<>();
@@ -248,6 +251,9 @@ public void seleccionEspecie(Especie especie) {
     private FotoVisible lecturaFoto(JsonObject contenido) {
         FotoVisible foto = new FotoVisible();
         foto.danio = contenido.get(ConstantesProtocolo.CAMPO_DANIO).getAsInt();
+        // Si el servidor no lo manda se toma como 0.
+        foto.tazasConsumidas = contenido.has(ConstantesProtocolo.CAMPO_TAZAS_CONSUMIDAS)
+                ? contenido.get(ConstantesProtocolo.CAMPO_TAZAS_CONSUMIDAS).getAsInt() : 0;
         for (JsonElement zona : contenido.getAsJsonArray(ConstantesProtocolo.CAMPO_ZONAS_VISIBLES)) {
             foto.zonasVisibles.add(zona.getAsInt());
         }

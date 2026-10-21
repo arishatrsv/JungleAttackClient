@@ -105,8 +105,9 @@ public class ConstantesCliente {
     // Textos de la pantalla de juego
     public static final String TEXTO_JUEGO_ZONA = "Zona: ";
     public static final String TEXTO_JUEGO_DANIO = "Daño: ";
+    public static final String TEXTO_JUEGO_TAZAS = "Tazas: ";
     public static final String TEXTO_JUEGO_ANIMALES = "Animales: ";
-    public static final String TEXTO_JUEGO_SEPARADOR = "   |   ";
+    public static final String TEXTO_JUEGO_SEPARADOR = "  |  ";
 
     // Selección y movimiento con el ratón
     public static final int DISTANCIA_MINIMA_ARRASTRE = 5; // píxeles: menos que esto es un clic, más es un rectángulo de selección

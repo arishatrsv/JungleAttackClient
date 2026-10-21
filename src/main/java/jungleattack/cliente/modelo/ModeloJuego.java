@@ -37,6 +37,8 @@ public class ModeloJuego {
     // La zona que se está mirando ahora: el jugador ve una zona a la vez, entre las que tiene visibles.
     private int zonaObservada;
     private int danio;
+    // Cuántas tazas ha consumido el propio jugador (viene del servidor).
+    private int tazasConsumidas;
     // Identificadores de los animales propios que el jugador tiene seleccionados con el ratón.
     private final List<String> animalesSeleccionados = new ArrayList<>();
 
@@ -235,6 +237,7 @@ public class ModeloJuego {
         this.zonaInicial = 0;
         this.zonaObservada = 0;
         this.danio = 0;
+        this.tazasConsumidas = 0;
         this.zonasVisibles.clear();
         this.animalesVisibles.clear();
         this.animalesSeleccionados.clear();
@@ -314,6 +317,18 @@ public class ModeloJuego {
 
     public int consultaDanio() {
         return danio;
+    }
+
+    public int consultaTazasConsumidas() {
+        return tazasConsumidas;
+    }
+
+    /**
+     * Guarda cuántas tazas consumió el jugador. No avisa a los observadores: se llama justo antes de
+     * actualizacionInicio o actualizacionEstadoVisible, que sí avisan, y así la pantalla ve todo junto.
+     */
+    public void actualizacionTazasConsumidas(int tazasConsumidas) {
+        this.tazasConsumidas = tazasConsumidas;
     }
 
     // Zonas cuyo contenido el jugador puede ver ahora.
