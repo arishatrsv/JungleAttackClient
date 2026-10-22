@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
-class ModeloJuegoEstadoTest {
+class ModeloJuegoInicioTest {
 
     private final MapaCliente mapa = MapaCliente.cargaDesdeRecurso();
 

@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
  * Pruebas del movimiento en el controlador, sin servidor: la conexión es falsa y guarda los mensajes
  * que el cliente "enviaría".
  */
-class ControladorJuegoMovimientoTest {
+class ControladorJuegoTest {
 
     // Conexión falsa: siempre "conectada" y guarda lo que se envía.
     private static class ConexionFalsa extends ConexionServidor {
