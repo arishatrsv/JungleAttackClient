@@ -248,4 +248,71 @@ class ControladorRatonTest {
         assertNotNull(enviado);
         assertEquals("jaguar-3", ConversorMensajes.campoDelContenido(enviado, ConstantesProtocolo.CAMPO_IDS_ANIMALES));
     }
+
+    // ----- Clic derecho: atacar o mover -----
+
+    @Test
+    void elClicDerechoSobreUnAnimalAjenoMandaAtacarloConLosSeleccionados() throws Exception {
+        empezarPartida();
+        seleccionados("jaguar-1", "jaguar-2");
+        raton.clicDerecho(new Point(697, 382)); // sobre el tucán de (695, 380)
+
+        Mensaje enviado = conexion.enviados.poll(3, TimeUnit.SECONDS);
+        assertNotNull(enviado);
+        assertEquals(ConstantesProtocolo.ATACAR, enviado.consultaTipo());
+        assertEquals("jaguar-1,jaguar-2", ConversorMensajes.campoDelContenido(enviado, ConstantesProtocolo.CAMPO_IDS_ANIMALES));
+        assertEquals("tucan-1", ConversorMensajes.campoDelContenido(enviado, ConstantesProtocolo.CAMPO_OBJETIVO));
+        assertNull(conexion.enviados.poll(300, TimeUnit.MILLISECONDS)); // y no se mandó también a moverse
+    }
+
+    @Test
+    void elClicDerechoSobreUnBotTambienAtaca() throws Exception {
+        empezarPartida();
+        modelo.actualizacionEstadoVisible(2, List.of(11, 12),
+                List.of(propio("jaguar-1", 725, 420), new AnimalVisible("cocodrilo-1", Especie.COCODRILO, 10, 10, new PuntoVisible(680, 450), false, true)),
+                List.of(), List.of());
+        seleccionados("jaguar-1");
+        raton.clicDerecho(new Point(680, 450));
+        Mensaje enviado = conexion.enviados.poll(3, TimeUnit.SECONDS);
+        assertNotNull(enviado);
+        assertEquals(ConstantesProtocolo.ATACAR, enviado.consultaTipo());
+        assertEquals("cocodrilo-1", ConversorMensajes.campoDelContenido(enviado, ConstantesProtocolo.CAMPO_OBJETIVO));
+    }
+
+    @Test
+    void elClicDerechoSobreUnAnimalAjenoSinSeleccionNoHaceNada() throws Exception {
+        empezarPartida();
+        raton.clicDerecho(new Point(695, 380));
+        assertNull(conexion.enviados.poll(300, TimeUnit.MILLISECONDS));
+    }
+
+    @Test
+    void elClicDerechoEnUnLugarVacioMandaMover() throws Exception {
+        empezarPartida();
+        seleccionados("jaguar-1");
+        raton.clicDerecho(new Point(535, 420));
+        Mensaje enviado = conexion.enviados.poll(3, TimeUnit.SECONDS);
+        assertNotNull(enviado);
+        assertEquals(ConstantesProtocolo.MOVER_ANIMALES, enviado.consultaTipo());
+    }
+
+    @Test
+    void elClicDerechoSobreUnAnimalPropioMandaMoverYNoAAtacar() throws Exception {
+        empezarPartida();
+        seleccionados("jaguar-1");
+        raton.clicDerecho(new Point(665, 420)); // sobre jaguar-2, que es propio
+        Mensaje enviado = conexion.enviados.poll(3, TimeUnit.SECONDS);
+        assertNotNull(enviado);
+        assertEquals(ConstantesProtocolo.MOVER_ANIMALES, enviado.consultaTipo());
+    }
+
+    @Test
+    void elBotonDerechoRealSobreUnAnimalAjenoAtaca() throws Exception {
+        empezarPartida();
+        seleccionados("jaguar-3");
+        raton.mousePressed(evento(MouseEvent.MOUSE_PRESSED, 695, 380, MouseEvent.BUTTON3, MouseEvent.BUTTON3_DOWN_MASK));
+        Mensaje enviado = conexion.enviados.poll(3, TimeUnit.SECONDS);
+        assertNotNull(enviado);
+        assertEquals(ConstantesProtocolo.ATACAR, enviado.consultaTipo());
+    }
 }

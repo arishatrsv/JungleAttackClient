@@ -188,4 +188,71 @@ class ControladorJuegoMovimientoTest {
         empezarPartida();
         assertEquals(Especie.JAGUAR, modelo.consultaAnimalesVisibles().get(0).consultaEspecie());
     }
+
+    private JsonObject evento(String tipo, String atacante, String objetivo, String especie, int x, int y) {
+        JsonObject evento = new JsonObject();
+        evento.addProperty(ConstantesProtocolo.CAMPO_TIPO_EVENTO, tipo);
+        if (atacante != null) {
+            evento.addProperty(ConstantesProtocolo.CAMPO_ATACANTE, atacante);
+        }
+        evento.addProperty(ConstantesProtocolo.CAMPO_OBJETIVO, objetivo);
+        evento.addProperty(ConstantesProtocolo.CAMPO_ESPECIE, especie);
+        evento.addProperty(ConstantesProtocolo.CAMPO_DANIO, 2);
+        evento.addProperty(ConstantesProtocolo.CAMPO_X, x);
+        evento.addProperty(ConstantesProtocolo.CAMPO_Y, y);
+        return evento;
+    }
+
+    @Test
+    void unStateUpdateConEventosCreaLosEfectosYLosBotsEliminados() throws Exception {
+        empezarPartida();
+        JsonObject contenido = foto(List.of(12), animal("jaguar-1", 725, 420, true));
+        contenido.addProperty(ConstantesProtocolo.CAMPO_BOTS_ELIMINADOS, 2);
+        JsonArray eventos = new JsonArray();
+        eventos.add(evento(ConstantesProtocolo.EVENTO_ATAQUE, "jaguar-1", "cocodrilo-1", "jaguar", 700, 410));
+        eventos.add(evento(ConstantesProtocolo.EVENTO_MUERTE, null, "cocodrilo-1", "cocodrilo", 700, 410));
+        contenido.add(ConstantesProtocolo.CAMPO_EVENTOS, eventos);
+        recibir(new Mensaje(ConstantesProtocolo.ACTUALIZACION_ESTADO, contenido.toString()));
+
+        assertEquals(2, modelo.consultaBotsEliminados());
+        List<jungleattack.cliente.modelo.EfectoCombate> efectos = modelo.consultaEfectosActivos(System.currentTimeMillis());
+        assertEquals(2, efectos.size());
+        assertFalse(efectos.get(0).consultaMuerte());
+        assertEquals(Especie.JAGUAR, efectos.get(0).consultaEspecie());
+        assertEquals(700, efectos.get(0).consultaX());
+        assertTrue(efectos.get(1).consultaMuerte());
+    }
+
+    @Test
+    void unStateUpdateSinEventosNoCreaEfectos() throws Exception {
+        empezarPartida();
+        recibir(new Mensaje(ConstantesProtocolo.ACTUALIZACION_ESTADO,
+                foto(List.of(12), animal("jaguar-1", 725, 420, true)).toString()));
+        assertEquals(0, modelo.consultaEfectosActivos(System.currentTimeMillis()).size());
+        assertEquals(0, modelo.consultaBotsEliminados());
+    }
+
+    @Test
+    void unaOrdenDeAtaqueEnviaLosAtacantesYElObjetivo() throws Exception {
+        empezarPartida();
+        AnimalVisible objetivo = new AnimalVisible("cocodrilo-1", Especie.COCODRILO, 10, 10, new PuntoVisible(700, 410), false, true);
+        controlador.ordenAtaque(modelo.consultaAnimalesVisibles(), objetivo);
+
+        Mensaje enviado = conexion.enviados.poll(3, TimeUnit.SECONDS);
+        assertNotNull(enviado, "debió enviarse ATTACK");
+        assertEquals(ConstantesProtocolo.ATACAR, enviado.consultaTipo());
+        assertEquals("jaguar-1,jaguar-2", ConversorMensajes.campoDelContenido(enviado, ConstantesProtocolo.CAMPO_IDS_ANIMALES));
+        assertEquals("cocodrilo-1", ConversorMensajes.campoDelContenido(enviado, ConstantesProtocolo.CAMPO_OBJETIVO));
+    }
+
+    @Test
+    void unaOrdenDeAtaqueSinAtacantesONiObjetivoNoEnviaNada() throws Exception {
+        empezarPartida();
+        AnimalVisible objetivo = new AnimalVisible("cocodrilo-1", Especie.COCODRILO, 10, 10, new PuntoVisible(700, 410), false, true);
+        controlador.ordenAtaque(List.of(), objetivo);
+        controlador.ordenAtaque(modelo.consultaAnimalesVisibles(), null);
+        controlador.ordenAtaque(null, objetivo);
+        assertEquals(null, conexion.enviados.poll(300, TimeUnit.MILLISECONDS));
+    }
 }
+

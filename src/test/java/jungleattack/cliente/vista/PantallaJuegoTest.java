@@ -155,4 +155,43 @@ class PantallaJuegoTest {
         pantalla.actualizacionAnimacion();
         assertTrue(animal.consultaVisualX() >= antes);
     }
+
+    @Test
+    void elEfectoDeUnAtaqueSeDibujaSobreElAnimalAtacado() {
+        ModeloJuego modelo = modeloEnJuego();
+        BufferedImage sinEfecto = dibujar(modelo);
+        ZonaVisible zona = modelo.consultaMapa().zonaPorIdentificador(12);
+        int x = zona.consultaPosicion().consultaPosicionX() - 60;
+        int y = zona.consultaPosicion().consultaPosicionY() - 30;
+        modelo.actualizacionEfectos(List.of(new jungleattack.cliente.modelo.EfectoCombate(false, Especie.JAGUAR, "cocodrilo-1", x, y, System.currentTimeMillis())));
+        BufferedImage conEfecto = dibujar(modelo);
+        boolean cambio = false;
+        for (int dx = -20; dx <= 20 && !cambio; dx++) {
+            for (int dy = -20; dy <= 20 && !cambio; dy++) {
+                cambio = sinEfecto.getRGB(x + dx, y + dy) != conEfecto.getRGB(x + dx, y + dy);
+            }
+        }
+        assertTrue(cambio, "debe verse algo distinto donde ocurrió el ataque");
+    }
+
+    @Test
+    void laMuerteSeMarcaConUnCirculoYUnEfectoVencidoYaNoSeDibuja() {
+        ModeloJuego modelo = modeloEnJuego();
+        BufferedImage base = dibujar(modelo);
+        ZonaVisible zona = modelo.consultaMapa().zonaPorIdentificador(12);
+        int x = zona.consultaPosicion().consultaPosicionX() - 60;
+        int y = zona.consultaPosicion().consultaPosicionY() - 30;
+        modelo.actualizacionEfectos(List.of(new jungleattack.cliente.modelo.EfectoCombate(true, Especie.COCODRILO, "cocodrilo-1", x, y, System.currentTimeMillis())));
+        BufferedImage conMuerte = dibujar(modelo);
+        boolean cambio = false;
+        for (int dx = -40; dx <= 40 && !cambio; dx++) {
+            cambio = base.getRGB(x + dx, y) != conMuerte.getRGB(x + dx, y) || base.getRGB(x, y + dx) != conMuerte.getRGB(x, y + dx);
+        }
+        assertTrue(cambio, "debe verse el círculo de la muerte");
+
+        ModeloJuego otro = modeloEnJuego();
+        otro.actualizacionEfectos(List.of(new jungleattack.cliente.modelo.EfectoCombate(true, Especie.COCODRILO, "cocodrilo-1", x, y, 0))); // empezó hace mucho
+        BufferedImage vencido = dibujar(otro);
+        assertEquals(base.getRGB(x, y), vencido.getRGB(x, y));
+    }
 }

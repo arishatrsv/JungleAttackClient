@@ -160,4 +160,40 @@ class ModeloJuegoEstadoTest {
         assertEquals(0, modelo.consultaTazasVisibles().size());
         assertEquals(3, modelo.consultaDanio());
     }
+
+    @Test
+    void losBotsEliminadosSeGuardanYSeBorranAlReiniciar() {
+        ModeloJuego modelo = modeloEnJuego();
+        modelo.actualizacionBotsEliminados(3);
+        assertEquals(3, modelo.consultaBotsEliminados());
+        modelo.reinicioPartida();
+        assertEquals(0, modelo.consultaBotsEliminados());
+    }
+
+    @Test
+    void unEfectoSeMuestraDuranteSuDuracionYLuegoSeDescarta() {
+        ModeloJuego modelo = modeloEnJuego();
+        modelo.actualizacionEfectos(List.of(new EfectoCombate(false, Especie.JAGUAR, "cocodrilo-1", 100, 100, 1000)));
+        assertEquals(1, modelo.consultaEfectosActivos(1000).size());
+        assertEquals(1, modelo.consultaEfectosActivos(1000 + jungleattack.cliente.constantes.ConstantesCliente.DURACION_EFECTO_MS - 1).size());
+        assertEquals(0, modelo.consultaEfectosActivos(1000 + jungleattack.cliente.constantes.ConstantesCliente.DURACION_EFECTO_MS).size());
+        assertEquals(0, modelo.consultaEfectosActivos(5000).size()); // ya no vuelve
+    }
+
+    @Test
+    void agregarEfectosNoAvisaALosObservadores() {
+        ModeloJuego modelo = modeloEnJuego();
+        AtomicInteger avisos = new AtomicInteger();
+        modelo.registroObservador(avisos::incrementAndGet);
+        modelo.actualizacionEfectos(List.of(new EfectoCombate(true, Especie.TUCAN, "tucan-1", 1, 1, 0)));
+        assertEquals(0, avisos.get());
+    }
+
+    @Test
+    void reiniciarLaPartidaBorraLosEfectos() {
+        ModeloJuego modelo = modeloEnJuego();
+        modelo.actualizacionEfectos(List.of(new EfectoCombate(false, Especie.JAGUAR, "x", 1, 1, System.currentTimeMillis())));
+        modelo.reinicioPartida();
+        assertEquals(0, modelo.consultaEfectosActivos(System.currentTimeMillis()).size());
+    }
 }
