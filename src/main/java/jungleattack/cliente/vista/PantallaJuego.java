@@ -18,6 +18,7 @@ import jungleattack.cliente.controlador.ControladorRaton;
 import jungleattack.cliente.modelo.AnimalVisible;
 import jungleattack.cliente.modelo.BanderaVisible;
 import jungleattack.cliente.modelo.CaminoVisible;
+import jungleattack.cliente.modelo.EfectoCombate;
 import jungleattack.cliente.modelo.MapaCliente;
 import jungleattack.cliente.modelo.ModeloJuego;
 import jungleattack.cliente.modelo.ObservadorModelo;
@@ -266,6 +267,39 @@ public class PantallaJuego extends PantallaBase implements ObservadorModelo {
         for (AnimalVisible animal : modelo.consultaAnimalesEnZonaObservada()) {
             dibujoAnimal(g2, animal);
         }
+        long ahora = System.currentTimeMillis();
+        for (EfectoCombate efecto : modelo.consultaEfectosActivos(ahora)) {
+            ZonaVisible zona = mapa.zonaPorPosicion(new PuntoVisible(efecto.consultaX(), efecto.consultaY()));
+            if (zona != null && zona.consultaIdentificador() == observada) {
+                dibujoEfecto(g2, efecto, ahora);
+            }
+        }
+    }
+
+    /**
+     * El efecto de un ataque (zarpazo, picotazo, mordisco o lengüetazo según la especie atacante) se dibuja sobre el
+     * animal atacado y se va desvaneciendo. La muerte se marca con un círculo rojo que crece y se desvanece.
+     */
+    private void dibujoEfecto(Graphics2D g2, EfectoCombate efecto, long ahora) {
+        double avance = Math.min(1.0, (double) (ahora - efecto.consultaInicio()) / ConstantesCliente.DURACION_EFECTO_MS);
+        float opacidad = (float) (1.0 - avance);
+        java.awt.Composite anterior = g2.getComposite();
+        g2.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, opacidad));
+        int tamano = ConstantesCliente.TAMANO_EFECTO_MAPA;
+        if (efecto.consultaMuerte()) {
+            int radio = (int) (tamano / 2 + avance * tamano / 2);
+            g2.setColor(ConstantesCliente.COLOR_EFECTO_MUERTE);
+            g2.setStroke(new BasicStroke(3f));
+            g2.drawOval(efecto.consultaX() - radio, efecto.consultaY() - radio, radio * 2, radio * 2);
+        } else if (efecto.consultaEspecie() != null) {
+            Image imagen = CacheImagenes.imagenDeRecurso(efecto.consultaEspecie().consultaIdentificador() + "@efecto",
+                    efecto.consultaEspecie().consultaEfectoVisual(),
+                    tamano * ConstantesCliente.FACTOR_CALIDAD_IMAGEN, tamano * ConstantesCliente.FACTOR_CALIDAD_IMAGEN);
+            if (imagen != null) {
+                g2.drawImage(imagen, efecto.consultaX() - tamano / 2, efecto.consultaY() - tamano / 2, tamano, tamano, null);
+            }
+        }
+        g2.setComposite(anterior);
     }
 
     // La base del asta queda en la posición de la bandera.
@@ -350,7 +384,7 @@ public class PantallaJuego extends PantallaBase implements ObservadorModelo {
         g2.draw(rectanguloSeleccion);
     }
 
-    // Franja de información arriba a la izquierda: zona que se mira, daño de la manada, tazas consumidas, animales propios y seleccionados.
+    // Franja de información arriba a la izquierda: zona que se mira, daño, tazas, bots eliminados, animales propios y seleccionados.
     private void dibujoPanelInformacion(Graphics2D g2, MapaCliente mapa) {
         ZonaVisible zona = mapa.zonaPorIdentificador(modelo.consultaZonaObservada());
         int propios = 0;
@@ -362,6 +396,7 @@ public class PantallaJuego extends PantallaBase implements ObservadorModelo {
         String texto = ConstantesCliente.TEXTO_JUEGO_ZONA + (zona == null ? "" : zona.consultaNombre())
                 + ConstantesCliente.TEXTO_JUEGO_SEPARADOR + ConstantesCliente.TEXTO_JUEGO_DANIO + modelo.consultaDanio()
                 + ConstantesCliente.TEXTO_JUEGO_SEPARADOR + ConstantesCliente.TEXTO_JUEGO_TAZAS + modelo.consultaTazasConsumidas()
+                + ConstantesCliente.TEXTO_JUEGO_SEPARADOR + ConstantesCliente.TEXTO_JUEGO_BOTS + modelo.consultaBotsEliminados()
                 + ConstantesCliente.TEXTO_JUEGO_SEPARADOR + ConstantesCliente.TEXTO_JUEGO_ANIMALES + propios
                 + ConstantesCliente.TEXTO_JUEGO_SEPARADOR + ConstantesCliente.TEXTO_JUEGO_SELECCIONADOS
                 + modelo.consultaAnimalesSeleccionados().size();

@@ -8,6 +8,7 @@ import java.util.List;
 import javax.swing.SwingUtilities;
 import jungleattack.cliente.modelo.AnimalVisible;
 import jungleattack.cliente.modelo.BanderaVisible;
+import jungleattack.cliente.modelo.EfectoCombate;
 import jungleattack.cliente.modelo.FaseCliente;
 import jungleattack.cliente.modelo.MapaCliente;
 import jungleattack.cliente.modelo.ModeloJuego;
@@ -117,8 +118,23 @@ public void seleccionEspecie(Especie especie) {
                 ConstantesProtocolo.CAMPO_Y, String.valueOf(destino.consultaPosicionY())));
     }
 
+    /**
+     * El jugador mandó atacar a un animal con los animales seleccionados. Se envía ATTACK con los identificadores
+     * de los atacantes (separados por comas) y el identificador del objetivo. Quién está al alcance y cuánto daño se
+     * hace lo decide el servidor: el cliente solo muestra el resultado en los STATE_UPDATE.
+     */
     public void ordenAtaque(List<AnimalVisible> animales, AnimalVisible objetivo) {
-        // TODO: implementar
+        if (animales == null || animales.isEmpty() || objetivo == null) {
+            return;
+        }
+        List<String> identificadores = new ArrayList<>();
+        for (AnimalVisible animal : animales) {
+            identificadores.add(animal.consultaIdentificador());
+        }
+        conexionYEnvio(ConversorMensajes.creacionMensaje(
+                ConstantesProtocolo.ATACAR,
+                ConstantesProtocolo.CAMPO_IDS_ANIMALES, String.join(ConstantesProtocolo.SEPARADOR_LISTA, identificadores),
+                ConstantesProtocolo.CAMPO_OBJETIVO, objetivo.consultaIdentificador()));
     }
 
     public void consultaZona(ZonaVisible zona) {
@@ -215,6 +231,7 @@ public void seleccionEspecie(Especie especie) {
             MapaCliente mapa = MapaCliente.cargaDesdeRecurso();
             FotoVisible foto = lecturaFoto(contenido);
             modelo.actualizacionTazasConsumidas(foto.tazasConsumidas);
+            modelo.actualizacionBotsEliminados(foto.botsEliminados);
             modelo.actualizacionInicio(mapa, contenido.get(ConstantesProtocolo.CAMPO_ZONA_INICIAL).getAsInt(),
                     foto.danio, foto.zonasVisibles, foto.animales, foto.tazas, foto.banderas);
         } catch (RuntimeException e) {
@@ -232,6 +249,8 @@ public void seleccionEspecie(Especie especie) {
         try {
             FotoVisible foto = lecturaFoto(ConversorMensajes.contenidoComoObjeto(mensaje));
             modelo.actualizacionTazasConsumidas(foto.tazasConsumidas);
+            modelo.actualizacionBotsEliminados(foto.botsEliminados);
+            modelo.actualizacionEfectos(foto.efectos);
             modelo.actualizacionEstadoVisible(foto.danio, foto.zonasVisibles, foto.animales, foto.tazas, foto.banderas);
         } catch (RuntimeException e) {
             // Se ignora esta foto.
@@ -242,6 +261,8 @@ public void seleccionEspecie(Especie especie) {
     private static class FotoVisible {
         private int danio;
         private int tazasConsumidas;
+        private int botsEliminados;
+        private final List<EfectoCombate> efectos = new ArrayList<>();
         private final List<Integer> zonasVisibles = new ArrayList<>();
         private final List<AnimalVisible> animales = new ArrayList<>();
         private final List<TazaVisible> tazas = new ArrayList<>();
@@ -254,6 +275,20 @@ public void seleccionEspecie(Especie especie) {
         // Si el servidor no lo manda se toma como 0.
         foto.tazasConsumidas = contenido.has(ConstantesProtocolo.CAMPO_TAZAS_CONSUMIDAS)
                 ? contenido.get(ConstantesProtocolo.CAMPO_TAZAS_CONSUMIDAS).getAsInt() : 0;
+        foto.botsEliminados = contenido.has(ConstantesProtocolo.CAMPO_BOTS_ELIMINADOS)
+                ? contenido.get(ConstantesProtocolo.CAMPO_BOTS_ELIMINADOS).getAsInt() : 0;
+        // Los eventos (ataques y muertes) solo vienen en algunos mensajes: si no están, no hay efectos.
+        if (contenido.has(ConstantesProtocolo.CAMPO_EVENTOS)) {
+            long ahora = System.currentTimeMillis();
+            for (JsonElement elemento : contenido.getAsJsonArray(ConstantesProtocolo.CAMPO_EVENTOS)) {
+                JsonObject datos = elemento.getAsJsonObject();
+                foto.efectos.add(new EfectoCombate(
+                        ConstantesProtocolo.EVENTO_MUERTE.equals(datos.get(ConstantesProtocolo.CAMPO_TIPO_EVENTO).getAsString()),
+                        Especie.consultaPorIdentificador(datos.get(ConstantesProtocolo.CAMPO_ESPECIE).getAsString()),
+                        datos.get(ConstantesProtocolo.CAMPO_OBJETIVO).getAsString(),
+                        datos.get(ConstantesProtocolo.CAMPO_X).getAsInt(), datos.get(ConstantesProtocolo.CAMPO_Y).getAsInt(), ahora));
+            }
+        }
         for (JsonElement zona : contenido.getAsJsonArray(ConstantesProtocolo.CAMPO_ZONAS_VISIBLES)) {
             foto.zonasVisibles.add(zona.getAsInt());
         }

@@ -100,6 +100,10 @@ public class VentanaPrincipal extends JFrame implements ObservadorModelo {
             case ConstantesProtocolo.MOTIVO_ESPECIE_NO_DISPONIBLE -> ConstantesCliente.TEXTO_ERROR_ESPECIE_NO_DISPONIBLE;
             case ConstantesProtocolo.MOTIVO_ESPECIE_YA_ELEGIDA -> ConstantesCliente.TEXTO_ERROR_ESPECIE_YA_ELEGIDA;
             case ConstantesProtocolo.MOTIVO_OPONENTE_DESCONECTADO -> ConstantesCliente.TEXTO_ERROR_OPONENTE_DESCONECTADO;
+            case ConstantesProtocolo.MOTIVO_ANIMAL_INVALIDO -> ConstantesCliente.TEXTO_ERROR_ANIMAL_INVALIDO;
+            case ConstantesProtocolo.MOTIVO_DESTINO_INVALIDO -> ConstantesCliente.TEXTO_ERROR_DESTINO_INVALIDO;
+            case ConstantesProtocolo.MOTIVO_OBJETIVO_INVALIDO -> ConstantesCliente.TEXTO_ERROR_OBJETIVO_INVALIDO;
+            case ConstantesProtocolo.MOTIVO_FUERA_DE_ALCANCE -> ConstantesCliente.TEXTO_ERROR_FUERA_DE_ALCANCE;
             default -> ConstantesCliente.TEXTO_ERROR_GENERICO;
         };
     }

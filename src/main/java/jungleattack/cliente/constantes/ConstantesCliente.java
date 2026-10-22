@@ -33,6 +33,10 @@ public class ConstantesCliente {
     public static final String TEXTO_ERROR_ESPECIE_NO_DISPONIBLE = "Ese animal ya fue elegido.";
     public static final String TEXTO_ERROR_ESPECIE_YA_ELEGIDA = "Ya elegiste tu animal.";
     public static final String TEXTO_ERROR_OPONENTE_DESCONECTADO = "Tu oponente se desconectó. La partida se canceló.";
+    public static final String TEXTO_ERROR_ANIMAL_INVALIDO = "Ese animal no se puede usar para esa orden.";
+    public static final String TEXTO_ERROR_DESTINO_INVALIDO = "Ese destino no está dentro del mapa.";
+    public static final String TEXTO_ERROR_OBJETIVO_INVALIDO = "No puedes atacar a ese animal.";
+    public static final String TEXTO_ERROR_FUERA_DE_ALCANCE = "Tus animales están muy lejos de ese objetivo. Acércalos primero.";
     
     // Textos de la pantalla de selección de animal
     public static final String TEXTO_SELECCION_TITULO = "Elige tu animal";
@@ -106,8 +110,14 @@ public class ConstantesCliente {
     public static final String TEXTO_JUEGO_ZONA = "Zona: ";
     public static final String TEXTO_JUEGO_DANIO = "Daño: ";
     public static final String TEXTO_JUEGO_TAZAS = "Tazas: ";
+    public static final String TEXTO_JUEGO_BOTS = "Bots: ";
     public static final String TEXTO_JUEGO_ANIMALES = "Animales: ";
     public static final String TEXTO_JUEGO_SEPARADOR = "  |  ";
+
+    // Efectos del combate
+    public static final int DURACION_EFECTO_MS = 450; // cuánto se ve el efecto de un ataque sobre el animal atacado
+    public static final int TAMANO_EFECTO_MAPA = 46;
+    public static final Color COLOR_EFECTO_MUERTE = new Color(240, 60, 60);
 
     // Selección y movimiento con el ratón
     public static final int DISTANCIA_MINIMA_ARRASTRE = 5; // píxeles: menos que esto es un clic, más es un rectángulo de selección

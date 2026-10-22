@@ -23,7 +23,8 @@ import jungleattack.cliente.vista.PantallaJuego;
  *   <li>Clic izquierdo sobre un animal propio: lo selecciona (con Ctrl o Shift lo agrega o lo quita de la selección).</li>
  *   <li>Arrastrar con el botón izquierdo: selecciona los animales propios dentro del rectángulo.</li>
  *   <li>Clic izquierdo en otra zona que se ve: pasa a mirar esa zona.</li>
- *   <li>Clic derecho: manda mover los animales seleccionados a ese punto.</li>
+ *   <li>Clic derecho sobre un animal de otro jugador o un bot: manda atacarlo con los animales seleccionados.</li>
+ *   <li>Clic derecho en cualquier otro punto: manda mover los animales seleccionados a ese punto.</li>
  * </ul>
  */
 public class ControladorRaton extends MouseAdapter {
@@ -46,7 +47,7 @@ public class ControladorRaton extends MouseAdapter {
     @Override
     public void mousePressed(MouseEvent evento) {
         if (SwingUtilities.isRightMouseButton(evento) || evento.isPopupTrigger()) {
-            seleccionDestino(evento.getPoint());
+            clicDerecho(evento.getPoint());
         } else if (SwingUtilities.isLeftMouseButton(evento)) {
             inicioArrastre = evento.getPoint();
             arrastrando = false;
@@ -151,8 +152,49 @@ public class ControladorRaton extends MouseAdapter {
         controladorJuego.ordenMovimiento(seleccionados, new PuntoVisible(x, y));
     }
 
-    public void seleccionObjetivo() {
-        // TODO: implementar (ataques)
+    /**
+     * Clic derecho: si cayó sobre un animal que no es del jugador (de su oponente o un bot) manda atacarlo;
+     * si cayó en cualquier otro lugar manda mover los animales seleccionados hasta ahí.
+     */
+    public void clicDerecho(Point puntoPantalla) {
+        if (!seleccionObjetivo(puntoPantalla)) {
+            seleccionDestino(puntoPantalla);
+        }
+    }
+
+    /**
+     * Si el punto de la ventana cayó sobre un animal ajeno de la zona que se mira, manda atacarlo con los animales
+     * seleccionados. Sin animales seleccionados no envía nada, pero igual cuenta como clic sobre un animal ajeno.
+     *
+     * @return true si el clic cayó sobre un animal ajeno (se haya enviado la orden o no)
+     */
+    public boolean seleccionObjetivo(Point puntoPantalla) {
+        PuntoVisible punto = pantallaJuego.consultaConversor().conversionPantallaAMapa(
+                new PuntoVisible(puntoPantalla.x, puntoPantalla.y));
+        AnimalVisible objetivo = animalAjenoCerca(punto);
+        if (objetivo == null) {
+            return false;
+        }
+        List<AnimalVisible> seleccionados = modelo.consultaAnimalesSeleccionados();
+        if (!seleccionados.isEmpty() && controladorJuego != null) {
+            controladorJuego.ordenAtaque(seleccionados, objetivo);
+        }
+        return true;
+    }
+
+    // El animal que no es del jugador, de la zona observada, más cercano al punto (si el clic cayó lo bastante cerca).
+    private AnimalVisible animalAjenoCerca(PuntoVisible punto) {
+        AnimalVisible mejor = null;
+        double menorDistancia = ConstantesCliente.RADIO_CLIC_ANIMAL;
+        for (AnimalVisible animal : modelo.consultaAnimalesEnZonaObservada()) {
+            double distancia = Math.hypot(animal.consultaVisualX() - punto.consultaPosicionX(),
+                    animal.consultaVisualY() - punto.consultaPosicionY());
+            if (!animal.consultaPropio() && distancia <= menorDistancia) {
+                menorDistancia = distancia;
+                mejor = animal;
+            }
+        }
+        return mejor;
     }
 
     // El animal propio de la zona observada más cercano al punto, si el clic cayó lo bastante cerca de él.

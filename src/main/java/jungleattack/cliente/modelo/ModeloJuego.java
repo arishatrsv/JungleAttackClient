@@ -3,6 +3,7 @@ package jungleattack.cliente.modelo;
 import common.model.Especie;
 
 import java.util.ArrayList;
+import jungleattack.cliente.constantes.ConstantesCliente;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,10 @@ public class ModeloJuego {
     private int danio;
     // Cuántas tazas ha consumido el propio jugador (viene del servidor).
     private int tazasConsumidas;
+    // Cuántos bots ha eliminado el propio jugador (viene del servidor).
+    private int botsEliminados;
+    // Efectos de combate que se están mostrando. CopyOnWriteArrayList porque se leen mientras se dibuja.
+    private final List<EfectoCombate> efectos = new java.util.concurrent.CopyOnWriteArrayList<>();
     // Identificadores de los animales propios que el jugador tiene seleccionados con el ratón.
     private final List<String> animalesSeleccionados = new ArrayList<>();
 
@@ -238,6 +243,8 @@ public class ModeloJuego {
         this.zonaObservada = 0;
         this.danio = 0;
         this.tazasConsumidas = 0;
+        this.botsEliminados = 0;
+        this.efectos.clear();
         this.zonasVisibles.clear();
         this.animalesVisibles.clear();
         this.animalesSeleccionados.clear();
@@ -321,6 +328,32 @@ public class ModeloJuego {
 
     public int consultaTazasConsumidas() {
         return tazasConsumidas;
+    }
+
+    public int consultaBotsEliminados() {
+        return botsEliminados;
+    }
+
+    // Igual que las tazas: no avisa a los observadores, se llama justo antes de la actualización que sí avisa.
+    public void actualizacionBotsEliminados(int botsEliminados) {
+        this.botsEliminados = botsEliminados;
+    }
+
+    /**
+     * Agrega efectos de combate nuevos (los de los eventos de un STATE_UPDATE). No avisa a los observadores,
+     * por lo mismo que actualizacionTazasConsumidas.
+     */
+    public void actualizacionEfectos(List<EfectoCombate> nuevos) {
+        efectos.addAll(nuevos);
+    }
+
+    /**
+     * Los efectos que todavía deben mostrarse en el instante "ahora" (milisegundos). Los que ya cumplieron su
+     * duración se descartan.
+     */
+    public List<EfectoCombate> consultaEfectosActivos(long ahora) {
+        efectos.removeIf(efecto -> ahora - efecto.consultaInicio() >= ConstantesCliente.DURACION_EFECTO_MS);
+        return List.copyOf(efectos);
     }
 
     /**
