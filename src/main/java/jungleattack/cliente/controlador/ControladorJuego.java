@@ -9,10 +9,12 @@ import javax.swing.SwingUtilities;
 import jungleattack.cliente.modelo.AnimalVisible;
 import jungleattack.cliente.modelo.BanderaVisible;
 import jungleattack.cliente.modelo.EfectoCombate;
+import jungleattack.cliente.modelo.EstadisticasVisibles;
 import jungleattack.cliente.modelo.FaseCliente;
 import jungleattack.cliente.modelo.MapaCliente;
 import jungleattack.cliente.modelo.ModeloJuego;
 import jungleattack.cliente.modelo.PuntoVisible;
+import jungleattack.cliente.modelo.ResumenVisible;
 import jungleattack.cliente.modelo.TazaVisible;
 import jungleattack.cliente.modelo.ZonaVisible;
 import jungleattack.cliente.protocolo.ConversorMensajes;
@@ -179,7 +181,11 @@ public void seleccionEspecie(Especie especie) {
             case ConstantesProtocolo.SELECCION_ANIMALES -> aplicacionSeleccion(mensaje);
             case ConstantesProtocolo.PARTIDA_INICIADA -> aplicacionInicio(mensaje);
             case ConstantesProtocolo.ACTUALIZACION_ESTADO -> aplicacionEstado(mensaje);
+            case ConstantesProtocolo.FIN_PARTIDA -> aplicacionFin(mensaje);
             case ConstantesProtocolo.ERROR -> {
+                if (modelo.consultaFase() == FaseCliente.RESUMEN) {
+                    return; // la partida ya terminó: un error tardío de una orden no debe interrumpir el resumen
+                }
                 String motivo = ConversorMensajes.campoDelContenido(mensaje, ConstantesProtocolo.CAMPO_MOTIVO);
                 if (ConstantesProtocolo.MOTIVO_OPONENTE_DESCONECTADO.equals(motivo)) {
                     // El servidor canceló la partida: vuelvo al inicio y aviso del motivo.
@@ -255,6 +261,40 @@ public void seleccionEspecie(Especie especie) {
         } catch (RuntimeException e) {
             // Se ignora esta foto.
         }
+    }
+
+    private void aplicacionFin(Mensaje mensaje) {
+        try {
+            JsonObject contenido = ConversorMensajes.contenidoComoObjeto(mensaje);
+            modelo.actualizacionResumen(new ResumenVisible(
+                    ConstantesProtocolo.RESULTADO_VICTORIA.equals(contenido.get(ConstantesProtocolo.CAMPO_RESULTADO).getAsString()),
+                    contenido.get(ConstantesProtocolo.CAMPO_RAZON).getAsString(),
+                    contenido.get(ConstantesProtocolo.CAMPO_GANADOR).getAsString(),
+                    contenido.get(ConstantesProtocolo.CAMPO_DURACION).getAsInt(),
+                    lecturaEstadisticas(contenido.getAsJsonObject(ConstantesProtocolo.CAMPO_RESUMEN_PROPIO)),
+                    lecturaEstadisticas(contenido.getAsJsonObject(ConstantesProtocolo.CAMPO_RESUMEN_OPONENTE))));
+        } catch (RuntimeException e) {
+            modelo.reinicioPartida();
+            modelo.actualizacionError(ConstantesProtocolo.MOTIVO_MENSAJE_INVALIDO);
+        }
+    }
+
+    private EstadisticasVisibles lecturaEstadisticas(JsonObject datos) {
+        return new EstadisticasVisibles(
+                datos.get(ConstantesProtocolo.CAMPO_APODO).getAsString(),
+                Especie.consultaPorIdentificador(datos.get(ConstantesProtocolo.CAMPO_ESPECIE).getAsString()),
+                datos.get(ConstantesProtocolo.CAMPO_BOTS_ELIMINADOS).getAsInt(),
+                datos.get(ConstantesProtocolo.CAMPO_ANIMALES_PERDIDOS).getAsInt(),
+                datos.get(ConstantesProtocolo.CAMPO_TAZAS_CONSUMIDAS).getAsInt());
+    }
+
+    /**
+     * El jugador terminó de ver el resumen y quiere volver al inicio. La conexión con el servidor sigue abierta
+     * así que puede crear o unirse a otra partida.
+     */
+    public void volverAlInicio() {
+        modelo.reinicioPartida();
+        modelo.actualizacionEstado(FaseCliente.INICIO);
     }
 
     // Lo que tienen en común GAME_STARTED y STATE_UPDATE, ya leído del JSON.

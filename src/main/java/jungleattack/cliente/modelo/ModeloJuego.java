@@ -257,20 +257,18 @@ public class ModeloJuego {
         this.error = null;
     }
 
-    public void actualizacionZona(ZonaVisible zona) {
-        // TODO: implementar
-    }
-
+    // La partida terminó: guarda el resumen y pasa a la fase RESUMEN, avisando una sola vez a los observadores.
+    // Los datos de la partida se quedan hasta que se vuelva al inicio, pero ya no se actualizan.
     public void actualizacionResumen(ResumenVisible resumen) {
-        // TODO: implementar
+        this.resumen = resumen;
+        this.animalesSeleccionados.clear();
+        this.fase = FaseCliente.RESUMEN;
+        notificacionObservadores();
     }
 
-    public void actualizacionMovimiento(AnimalVisible animal, PuntoVisible destino) {
-        // TODO: implementar
-    }
-
-    public void actualizacionAnimal(AnimalVisible animal) {
-        // TODO: implementar
+    // El resumen de la partida terminada (null mientras la partida no termine).
+    public ResumenVisible consultaResumen() {
+        return resumen;
     }
 
     //Registra un observador para que reciba los avisos de cambio.
@@ -339,27 +337,21 @@ public class ModeloJuego {
         this.botsEliminados = botsEliminados;
     }
 
-    /**
-     * Agrega efectos de combate nuevos (los de los eventos de un STATE_UPDATE). No avisa a los observadores,
-     * por lo mismo que actualizacionTazasConsumidas.
-     */
+    // Agrega efectos de combate nuevos. No avisa a los observadores,
+    // por lo mismo que actualizacionTazasConsumidas.
     public void actualizacionEfectos(List<EfectoCombate> nuevos) {
         efectos.addAll(nuevos);
     }
 
-    /**
-     * Los efectos que todavía deben mostrarse en el instante "ahora" (milisegundos). Los que ya cumplieron su
-     * duración se descartan.
-     */
+    // Los efectos que todavía deben mostrarse en el instante "ahora" (milisegundos). Los que ya cumplieron su
+    // duración se descartan.
     public List<EfectoCombate> consultaEfectosActivos(long ahora) {
         efectos.removeIf(efecto -> ahora - efecto.consultaInicio() >= ConstantesCliente.DURACION_EFECTO_MS);
         return List.copyOf(efectos);
     }
 
-    /**
-     * Guarda cuántas tazas consumió el jugador. No avisa a los observadores: se llama justo antes de
-     * actualizacionInicio o actualizacionEstadoVisible, que sí avisan, y así la pantalla ve todo junto.
-     */
+    // Guarda cuántas tazas consumió el jugador. No avisa a los observadores: se llama justo antes de
+    // actualizacionInicio o actualizacionEstadoVisible, que sí avisan, y así la pantalla ve todo junto.
     public void actualizacionTazasConsumidas(int tazasConsumidas) {
         this.tazasConsumidas = tazasConsumidas;
     }

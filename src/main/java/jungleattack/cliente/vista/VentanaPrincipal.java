@@ -81,9 +81,7 @@ public class VentanaPrincipal extends JFrame implements ObservadorModelo {
             case ESPERA -> cambioPantalla(new PantallaEspera(modelo));
             case SELECCION -> cambioPantalla(new PantallaSeleccion(modelo, controlador));
             case JUEGO -> cambioPantalla(new PantallaJuego(modelo, controlador));
-            default -> {
-                // TODO: pantalla de resumen (siguiente paso)
-            }
+            case RESUMEN -> cambioPantalla(new PantallaResumen(modelo, controlador));
         }
         faseMostrada = fase;
     }
