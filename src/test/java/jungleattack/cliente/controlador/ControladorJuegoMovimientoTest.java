@@ -254,5 +254,85 @@ class ControladorJuegoMovimientoTest {
         controlador.ordenAtaque(null, objetivo);
         assertEquals(null, conexion.enviados.poll(300, TimeUnit.MILLISECONDS));
     }
+
+    // ----- Fin de la partida -----
+
+    private JsonObject estadisticas(String apodo, String especie, int bots, int perdidos, int tazas) {
+        JsonObject datos = new JsonObject();
+        datos.addProperty(ConstantesProtocolo.CAMPO_APODO, apodo);
+        datos.addProperty(ConstantesProtocolo.CAMPO_ESPECIE, especie);
+        datos.addProperty(ConstantesProtocolo.CAMPO_BOTS_ELIMINADOS, bots);
+        datos.addProperty(ConstantesProtocolo.CAMPO_ANIMALES_PERDIDOS, perdidos);
+        datos.addProperty(ConstantesProtocolo.CAMPO_TAZAS_CONSUMIDAS, tazas);
+        return datos;
+    }
+
+    private Mensaje mensajeFin(String resultado, String razon) {
+        JsonObject contenido = new JsonObject();
+        contenido.addProperty(ConstantesProtocolo.CAMPO_RESULTADO, resultado);
+        contenido.addProperty(ConstantesProtocolo.CAMPO_GANADOR, "Ana");
+        contenido.addProperty(ConstantesProtocolo.CAMPO_RAZON, razon);
+        contenido.addProperty(ConstantesProtocolo.CAMPO_DURACION, 125);
+        contenido.add(ConstantesProtocolo.CAMPO_RESUMEN_PROPIO, estadisticas("Ana", "jaguar", 3, 2, 4));
+        contenido.add(ConstantesProtocolo.CAMPO_RESUMEN_OPONENTE, estadisticas("Luis", "tucan", 1, 5, 0));
+        return new Mensaje(ConstantesProtocolo.FIN_PARTIDA, contenido.toString());
+    }
+
+    @Test
+    void alLlegarGameOverElModeloPasaAResumenConTodosLosDatos() throws Exception {
+        empezarPartida();
+        recibir(mensajeFin(ConstantesProtocolo.RESULTADO_VICTORIA, ConstantesProtocolo.RAZON_BANDERA));
+
+        assertEquals(jungleattack.cliente.modelo.FaseCliente.RESUMEN, modelo.consultaFase());
+        jungleattack.cliente.modelo.ResumenVisible resumen = modelo.consultaResumen();
+        assertTrue(resumen.consultaVictoria());
+        assertEquals("Ana", resumen.consultaGanador());
+        assertEquals(ConstantesProtocolo.RAZON_BANDERA, resumen.consultaRazon());
+        assertEquals(125, resumen.consultaDuracion());
+        assertEquals("Ana", resumen.consultaPropio().consultaApodo());
+        assertEquals(Especie.JAGUAR, resumen.consultaPropio().consultaEspecie());
+        assertEquals(3, resumen.consultaPropio().consultaBotsEliminados());
+        assertEquals(2, resumen.consultaPropio().consultaAnimalesPerdidos());
+        assertEquals(4, resumen.consultaPropio().consultaTazasConsumidas());
+        assertEquals("Luis", resumen.consultaOponente().consultaApodo());
+        assertEquals(5, resumen.consultaOponente().consultaAnimalesPerdidos());
+    }
+
+    @Test
+    void unaDerrotaSeLeeComoDerrota() throws Exception {
+        empezarPartida();
+        recibir(mensajeFin(ConstantesProtocolo.RESULTADO_DERROTA, ConstantesProtocolo.RAZON_BANDERA));
+        assertFalse(modelo.consultaResumen().consultaVictoria());
+    }
+
+    @Test
+    void unGameOverMalFormadoMuestraUnErrorYVuelveAlInicio() throws Exception {
+        empezarPartida();
+        recibir(new Mensaje(ConstantesProtocolo.FIN_PARTIDA, "{\"resultado\":\"VICTORIA\"}"));
+        assertEquals(ConstantesProtocolo.MOTIVO_MENSAJE_INVALIDO, modelo.consultaError());
+        assertEquals(jungleattack.cliente.modelo.FaseCliente.INICIO, modelo.consultaFase());
+    }
+
+    @Test
+    void despuesDelGameOverLosEstadosYLosErroresTardiosSeIgnoran() throws Exception {
+        empezarPartida();
+        recibir(mensajeFin(ConstantesProtocolo.RESULTADO_VICTORIA, ConstantesProtocolo.RAZON_BANDERA));
+        recibir(new Mensaje(ConstantesProtocolo.ACTUALIZACION_ESTADO,
+                foto(List.of(12), animal("jaguar-1", 1, 1, true)).toString()));
+        recibir(ConversorMensajes.creacionMensaje(ConstantesProtocolo.ERROR,
+                ConstantesProtocolo.CAMPO_MOTIVO, ConstantesProtocolo.MOTIVO_FASE_INCORRECTA));
+        assertEquals(jungleattack.cliente.modelo.FaseCliente.RESUMEN, modelo.consultaFase());
+        assertEquals(null, modelo.consultaError());
+    }
+
+    @Test
+    void volverAlInicioLimpiaLaPartidaYVuelveALaPantallaDeInicio() throws Exception {
+        empezarPartida();
+        recibir(mensajeFin(ConstantesProtocolo.RESULTADO_VICTORIA, ConstantesProtocolo.RAZON_ABANDONO));
+        controlador.volverAlInicio();
+        assertEquals(jungleattack.cliente.modelo.FaseCliente.INICIO, modelo.consultaFase());
+        assertEquals(null, modelo.consultaResumen());
+        assertTrue(modelo.consultaAnimalesVisibles().isEmpty());
+    }
 }
 

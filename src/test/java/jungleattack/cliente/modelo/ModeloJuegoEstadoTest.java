@@ -196,4 +196,44 @@ class ModeloJuegoEstadoTest {
         modelo.reinicioPartida();
         assertEquals(0, modelo.consultaEfectosActivos(System.currentTimeMillis()).size());
     }
+
+    private ResumenVisible resumen(boolean victoria) {
+        return new ResumenVisible(victoria, "BANDERA", victoria ? "Ana" : "Luis", 125,
+                new EstadisticasVisibles("Ana", Especie.JAGUAR, 3, 2, 4), new EstadisticasVisibles("Luis", Especie.TUCAN, 1, 5, 0));
+    }
+
+    @Test
+    void alTerminarLaPartidaSeGuardaElResumenYSePasaAResumenAvisandoUnaVez() {
+        ModeloJuego modelo = modeloEnJuego();
+        AtomicInteger avisos = new AtomicInteger();
+        modelo.registroObservador(avisos::incrementAndGet);
+        assertEquals(null, modelo.consultaResumen());
+
+        modelo.actualizacionResumen(resumen(true));
+
+        assertEquals(FaseCliente.RESUMEN, modelo.consultaFase());
+        assertTrue(modelo.consultaResumen().consultaVictoria());
+        assertEquals(125, modelo.consultaResumen().consultaDuracion());
+        assertEquals(4, modelo.consultaResumen().consultaPropio().consultaTazasConsumidas());
+        assertEquals(5, modelo.consultaResumen().consultaOponente().consultaAnimalesPerdidos());
+        assertEquals(1, avisos.get());
+    }
+
+    @Test
+    void despuesDelResumenLasActualizacionesDeLaPartidaSeIgnoran() {
+        ModeloJuego modelo = modeloEnJuego();
+        modelo.actualizacionResumen(resumen(false));
+        modelo.actualizacionEstadoVisible(9, List.of(12), List.of(propio("jaguar-1", 1, 1)), List.of(), List.of());
+        assertEquals(2, modelo.consultaDanio());
+        assertEquals(FaseCliente.RESUMEN, modelo.consultaFase());
+    }
+
+    @Test
+    void alReiniciarLaPartidaSeBorraElResumen() {
+        ModeloJuego modelo = modeloEnJuego();
+        modelo.actualizacionResumen(resumen(true));
+        modelo.reinicioPartida();
+        assertEquals(null, modelo.consultaResumen());
+        assertEquals(FaseCliente.INICIO, modelo.consultaFase());
+    }
 }
