@@ -114,6 +114,21 @@ public class ConstantesCliente {
     public static final String TEXTO_JUEGO_ANIMALES = "Animales: ";
     public static final String TEXTO_JUEGO_SEPARADOR = "  |  ";
 
+    // Pantalla de resumen (final de la partida)
+    public static final String TEXTO_RESUMEN_VICTORIA = "¡Ganaste!";
+    public static final String TEXTO_RESUMEN_DERROTA = "Perdiste";
+    public static final String TEXTO_RESUMEN_RAZON_BANDERA = "Una manada llegó a la bandera del oponente.";
+    public static final String TEXTO_RESUMEN_RAZON_ABANDONO = "Tu oponente se desconectó, así que ganaste la partida.";
+    public static final String TEXTO_RESUMEN_RAZON_BANDERA_PERDIDA = "El oponente llegó a tu bandera.";
+    public static final String TEXTO_RESUMEN_DURACION = "Duración: ";
+    public static final String TEXTO_RESUMEN_BOTS = "Bots eliminados";
+    public static final String TEXTO_RESUMEN_PERDIDOS = "Animales perdidos";
+    public static final String TEXTO_RESUMEN_TAZAS = "Tazas consumidas";
+    public static final String TEXTO_RESUMEN_TU = "Tú";
+    public static final String TEXTO_BOTON_VOLVER = "Volver al inicio";
+    public static final Color COLOR_RESUMEN_VICTORIA = new Color(40, 150, 70);
+    public static final Color COLOR_RESUMEN_DERROTA = new Color(190, 50, 50);
+
     // Efectos del combate
     public static final int DURACION_EFECTO_MS = 450; // cuánto se ve el efecto de un ataque sobre el animal atacado
     public static final int TAMANO_EFECTO_MAPA = 46;
