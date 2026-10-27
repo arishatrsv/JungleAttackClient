@@ -16,7 +16,6 @@ import jungleattack.cliente.modelo.ModeloJuego;
 import jungleattack.cliente.modelo.PuntoVisible;
 import jungleattack.cliente.modelo.ResumenVisible;
 import jungleattack.cliente.modelo.TazaVisible;
-import jungleattack.cliente.modelo.ZonaVisible;
 import jungleattack.cliente.protocolo.ConversorMensajes;
 import jungleattack.cliente.protocolo.Mensaje;
 import jungleattack.cliente.red.ConexionServidor;
@@ -62,7 +61,7 @@ public class ControladorJuego {
         hilo.start();
     }
 
-public void unionPartida(String apodo, String codigoPartida) {
+    public void unionPartida(String apodo, String codigoPartida) {
     String apodoLimpio = apodo == null ? "" : apodo.trim();
     String codigoLimpio = codigoPartida == null ? "" : codigoPartida.trim();
     if (apodoLimpio.isEmpty()) {
@@ -79,9 +78,9 @@ public void unionPartida(String apodo, String codigoPartida) {
             ConstantesProtocolo.CAMPO_APODO, apodoLimpio,
             ConstantesProtocolo.CAMPO_CODIGO, codigoLimpio);
     conexionYEnvio(mensaje);
-}
+    }
 
-public void seleccionEspecie(Especie especie) {
+    public void seleccionEspecie(Especie especie) {
     if (especie == null) {
         return;
     }
@@ -90,7 +89,15 @@ public void seleccionEspecie(Especie especie) {
             ConstantesProtocolo.CAMPO_ESPECIE,
             especie.consultaIdentificador());
     conexionYEnvio(mensaje);
-}
+    }
+
+    //El jugador canceló la espera: se cierra la conexión (el servidor cancela la partida al ver la desconexión)
+    public void cancelarPartida() {
+        conexion.cierre();
+        modelo.reinicioPartida();
+        modelo.actualizacionEstado(FaseCliente.INICIO);
+    }
+
     // El jugador seleccionó animales con el ratón. Es solo del cliente: no se le avisa al servidor.
     public void seleccionAnimales(List<AnimalVisible> animales) {
         List<String> identificadores = new ArrayList<>();
@@ -139,9 +146,6 @@ public void seleccionEspecie(Especie especie) {
                 ConstantesProtocolo.CAMPO_OBJETIVO, objetivo.consultaIdentificador()));
     }
 
-    public void consultaZona(ZonaVisible zona) {
-        // TODO: implementar
-    }
     private void conexionYEnvio(Mensaje mensaje) {
         Thread hilo = new Thread(() -> {
             if (!conexion.conexion(this::procesamientoActualizacion)) {
@@ -155,6 +159,7 @@ public void seleccionEspecie(Especie especie) {
         hilo.setDaemon(true);
         hilo.start();
     }
+
     /**
      * Recibe un mensaje del servidor. Esto lo llama el hilo de red, y ese hilo no puede tocar Swing,
      * así que paso el trabajo al hilo de Swing con invokeLater. Ahí sí se puede cambiar el modelo
@@ -200,7 +205,7 @@ public void seleccionEspecie(Especie especie) {
                 modelo.actualizacionEstado(FaseCliente.INICIO);
             }
             default -> {
-                // TODO: los demás tipos (fin de la partida...) se agregan en los siguientes pasos.
+                // Tipos de mensaje que el cliente no usa: se ignoran.
             }
         }
     }

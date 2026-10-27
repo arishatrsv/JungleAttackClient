@@ -69,6 +69,7 @@ public class PantallaJuego extends PantallaBase implements ObservadorModelo {
         repaint();
     }
 
+
     @Override
     public void dibujo() {
         repaint();
@@ -109,10 +110,6 @@ public class PantallaJuego extends PantallaBase implements ObservadorModelo {
             animal.actualizacionVisual(transcurrido);
         }
         repaint();
-    }
-
-    public void representacionMovimiento(AnimalVisible animal, PuntoVisible destino) {
-        // TODO: implementar (movimiento de los animales)
     }
 
     @Override

@@ -27,6 +27,7 @@ public class PantallaSeleccion extends PantallaBase {
     private final ControladorJuego controlador;
 
     public PantallaSeleccion(ModeloJuego modelo, ControladorJuego controlador) {
+        super(true); // con el fondo común de las pantallas de menú
         this.modelo = modelo;
         this.controlador = controlador;
     }
@@ -39,12 +40,16 @@ public class PantallaSeleccion extends PantallaBase {
 
         // Arriba: el título y el estado de la selección.
         JPanel arriba = new JPanel(new GridLayout(2, 1));
-        arriba.add(new JLabel(ConstantesCliente.TEXTO_SELECCION_TITULO, SwingConstants.CENTER));
-        arriba.add(new JLabel(textoDeEstado(), SwingConstants.CENTER));
+        arriba.setOpaque(false); // para que se vea el fondo
+        arriba.add(EstiloVista.etiqueta(ConstantesCliente.TEXTO_SELECCION_TITULO, ConstantesCliente.TAMANO_FUENTE_TITULO,
+                true, ConstantesCliente.COLOR_ACENTO));
+        arriba.add(EstiloVista.etiqueta(textoDeEstado(), ConstantesCliente.TAMANO_FUENTE_SUBTITULO, false,
+                ConstantesCliente.COLOR_TEXTO_PANTALLA));
         add(arriba, BorderLayout.NORTH);
 
         // Centro: una tarjeta por cada especie.
         JPanel tarjetas = new JPanel(new GridLayout(0, ConstantesCliente.COLUMNAS_SELECCION, 8, 8));
+        tarjetas.setOpaque(false); // para que se vea el fondo
         Especie propia = modelo.consultaJugadorLocal().consultaEspecie();
         for (Especie especie : Especie.values()) {
             tarjetas.add(crearTarjeta(especie, propia));
@@ -101,3 +106,4 @@ public class PantallaSeleccion extends PantallaBase {
         return Character.toUpperCase(nombre.charAt(0)) + nombre.substring(1);
     }
 }
+

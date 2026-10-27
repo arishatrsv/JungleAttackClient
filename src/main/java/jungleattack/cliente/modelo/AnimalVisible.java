@@ -82,12 +82,4 @@ public class AnimalVisible extends common.model.Animal {
     public int consultaEnergiaMaxima() {
         return energiaMaxima;
     }
-
-    public void actualizacionEnergia() {
-        // TODO: implementar
-    }
-
-    public void actualizacionEstado() {
-        // TODO: implementar
-    }
 }

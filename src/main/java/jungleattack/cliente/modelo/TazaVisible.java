@@ -20,8 +20,4 @@ public class TazaVisible extends ElementoVisible {
     public boolean consultaConsumida() {
         return consumida;
     }
-
-    public void actualizacionEstado() {
-        // TODO: implementar (cuando el servidor avise que la taza fue consumida)
-    }
 }

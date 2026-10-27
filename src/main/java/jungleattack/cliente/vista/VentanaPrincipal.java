@@ -59,8 +59,7 @@ public class VentanaPrincipal extends JFrame implements ObservadorModelo {
         String error = modelo.consultaError();
         if (error != null) {
             modelo.limpiezaError(); // lo borro antes de mostrarlo para que no se muestre dos veces
-            JOptionPane.showMessageDialog(this, textoDeError(error),
-                    ConstantesCliente.TITULO_ERROR, JOptionPane.ERROR_MESSAGE);
+            mostrarError(error);
         }
         FaseCliente fase = modelo.consultaFase();
         if (fase != faseMostrada) {
@@ -68,6 +67,31 @@ public class VentanaPrincipal extends JFrame implements ObservadorModelo {
         } else if (pantallaActual != null) {
             pantallaActual.dibujo(); // misma fase, pero los datos cambiaron: vuelvo a dibujar la pantalla
         }
+    }
+
+    // Los errores de las órdenes durante la partida se avisan sobre el mapa para no interrumpir el juego;
+    // todos los demás errores se muestran en una ventana.
+    private void mostrarError(String motivo) {
+        String texto = textoDeError(motivo);
+        if (modelo.consultaFase() == FaseCliente.JUEGO && faseMostrada == FaseCliente.JUEGO
+                && pantallaActual instanceof PantallaJuego juego && esErrorDeOrden(motivo)) {
+            juego.mostrarAviso(texto);
+            return;
+        }
+        JOptionPane.showMessageDialog(this, texto, ConstantesCliente.TITULO_ERROR, JOptionPane.ERROR_MESSAGE);
+    }
+
+    // Errores que puede devolver el servidor a una orden de mover o atacar (el jugador solo debe corregir la orden).
+    static boolean esErrorDeOrden(String motivo) {
+        return switch (motivo) {
+            case ConstantesProtocolo.MOTIVO_ANIMAL_INVALIDO,
+                    ConstantesProtocolo.MOTIVO_DESTINO_INVALIDO,
+                    ConstantesProtocolo.MOTIVO_OBJETIVO_INVALIDO,
+                    ConstantesProtocolo.MOTIVO_FUERA_DE_ALCANCE,
+                    ConstantesProtocolo.MOTIVO_FASE_INCORRECTA,
+                    ConstantesProtocolo.MOTIVO_ERROR_INTERNO -> true;
+            default -> false;
+        };
     }
 
     // Muestra la pantalla que corresponde a la fase actual, solo si la fase cambió.
@@ -78,7 +102,7 @@ public class VentanaPrincipal extends JFrame implements ObservadorModelo {
         }
         switch (fase) {
             case INICIO -> cambioPantalla(new PantallaInicio(controlador));
-            case ESPERA -> cambioPantalla(new PantallaEspera(modelo));
+            case ESPERA -> cambioPantalla(new PantallaEspera(modelo, controlador));
             case SELECCION -> cambioPantalla(new PantallaSeleccion(modelo, controlador));
             case JUEGO -> cambioPantalla(new PantallaJuego(modelo, controlador));
             case RESUMEN -> cambioPantalla(new PantallaResumen(modelo, controlador));

@@ -20,6 +20,7 @@ public class ConstantesCliente {
     public static final String TEXTO_BOTON_CREAR = "Crear partida";
     public static final String TEXTO_CODIGO = "Código de la partida:";
     public static final String TEXTO_ESPERA = "Esperando al otro jugador...";
+    public static final String TEXTO_ESPERA_BASE = "Esperando al otro jugador"; // sin puntos: los puntos de la espera se animan
     public static final String TITULO_ERROR = "Error";
     public static final String TEXTO_ERROR_APODO = "Escribe un apodo válido.";
     public static final String TEXTO_ERROR_SIN_CONEXION = "No se pudo conectar con el servidor.";
@@ -37,7 +38,7 @@ public class ConstantesCliente {
     public static final String TEXTO_ERROR_DESTINO_INVALIDO = "Ese destino no está dentro del mapa.";
     public static final String TEXTO_ERROR_OBJETIVO_INVALIDO = "No puedes atacar a ese animal.";
     public static final String TEXTO_ERROR_FUERA_DE_ALCANCE = "Tus animales están muy lejos de ese objetivo. Acércalos primero.";
-    
+
     // Textos de la pantalla de selección de animal
     public static final String TEXTO_SELECCION_TITULO = "Elige tu animal";
     public static final String TEXTO_SELECCION_ELIGE = "Elige un animal de la lista.";
@@ -126,8 +127,67 @@ public class ConstantesCliente {
     public static final String TEXTO_RESUMEN_TAZAS = "Tazas consumidas";
     public static final String TEXTO_RESUMEN_TU = "Tú";
     public static final String TEXTO_BOTON_VOLVER = "Volver al inicio";
-    public static final Color COLOR_RESUMEN_VICTORIA = new Color(40, 150, 70);
-    public static final Color COLOR_RESUMEN_DERROTA = new Color(190, 50, 50);
+    public static final Color COLOR_RESUMEN_VICTORIA = new Color(100, 225, 130);
+    public static final Color COLOR_RESUMEN_DERROTA = new Color(245, 100, 100);
+    public static final Color COLOR_CAPA_VICTORIA = new Color(20, 110, 40, 120); // tiñe el fondo del resumen
+    public static final Color COLOR_CAPA_DERROTA = new Color(140, 20, 20, 120);
+
+    // Aspecto común de las pantallas de inicio, espera, selección y resumen
+    public static final String RUTA_FONDO_INICIO = "imagenes/ui/fondo_inicio.svg";
+    public static final String NOMBRE_FONDO_INICIO = "fondo_inicio";
+    public static final int ANCHO_FONDO_INICIO = 1600; // misma proporción que el SVG (1000 x 650); se rasteriza una sola vez
+    public static final int ALTO_FONDO_INICIO = 1040;
+    public static final Color COLOR_FONDO_PANTALLA = new Color(25, 45, 30); // se usa si el SVG del fondo no se pudo cargar
+    public static final Color COLOR_CAPA_FONDO = new Color(0, 0, 0, 90); // oscurece el fondo para que se lea el texto
+    public static final Color COLOR_TARJETA = new Color(15, 30, 20, 205);
+    public static final Color COLOR_BORDE_TARJETA = new Color(255, 255, 255, 70);
+    public static final int ARCO_TARJETA = 28;
+    public static final int RELLENO_TARJETA = 28;
+    public static final int ESPACIO_PANTALLA = 10; // separación entre los elementos de una pantalla
+    public static final Color COLOR_TEXTO_PANTALLA = Color.WHITE;
+    public static final Color COLOR_TEXTO_SECUNDARIO = new Color(205, 220, 200);
+    public static final Color COLOR_ACENTO = new Color(245, 195, 60);
+    public static final Color COLOR_BOTON_PRINCIPAL = new Color(46, 125, 50);
+    public static final Color COLOR_BOTON_SECUNDARIO = new Color(120, 85, 48);
+    public static final Color COLOR_BOTON_CANCELAR = new Color(120, 55, 55);
+    public static final Color COLOR_TEXTO_BOTON = Color.WHITE;
+    public static final Color COLOR_FICHA_CODIGO = new Color(20, 40, 25); // sólido: se pinta en un componente opaco
+    public static final String NOMBRE_FUENTE = Font.SANS_SERIF;
+    public static final String NOMBRE_FUENTE_CODIGO = Font.MONOSPACED;
+    public static final int TAMANO_FUENTE_TITULO = 44;
+    public static final int TAMANO_FUENTE_SUBTITULO = 17;
+    public static final int TAMANO_FUENTE_ETIQUETA = 15;
+    public static final int TAMANO_FUENTE_BOTON = 16;
+    public static final int TAMANO_FUENTE_CODIGO = 56;
+    public static final int TAMANO_FUENTE_ENCABEZADO = 19;
+    public static final int TAMANO_FUENTE_ESTADISTICA = 22;
+    public static final int TAMANO_FUENTE_TITULO_RESUMEN = 52;
+    public static final int RELLENO_BOTON_VERTICAL = 10;
+    public static final int RELLENO_CAMPO = 5; // margen interno de los campos de texto
+    public static final int RELLENO_BOTON_HORIZONTAL = 26;
+    public static final int GROSOR_FICHA_CODIGO = 2;
+    public static final int RELLENO_FICHA_VERTICAL = 8;
+    public static final int RELLENO_FICHA_HORIZONTAL = 20;
+    public static final int TAMANO_ICONO_TITULO_RESUMEN = 84;
+    public static final int TAMANO_ICONO_TARJETA_RESUMEN = 96;
+    public static final int ESPACIO_TARJETAS_RESUMEN = 24;
+    public static final int INTERVALO_PUNTOS_ESPERA_MS = 450; // cada cuánto aparece un punto más en "Esperando..."
+    public static final int PUNTOS_ESPERA_MAXIMO = 3;
+
+    // Textos nuevos de las pantallas de inicio, espera y resumen
+    public static final String TEXTO_SUBTITULO_INICIO = "Batalla en la selva costarricense";
+    public static final String TEXTO_O_UNIRSE = "— o únete a una partida —";
+    public static final String TEXTO_ESPERA_TITULO = "¡Partida creada!";
+    public static final String TEXTO_ESPERA_AYUDA = "Comparte este código con tu oponente";
+    public static final String TEXTO_BOTON_COPIAR = "Copiar código";
+    public static final String TEXTO_BOTON_COPIADO = "¡Copiado!";
+    public static final String TEXTO_BOTON_CANCELAR = "Cancelar";
+
+    // Aviso breve sobre el mapa (errores de las órdenes durante la partida: no interrumpen el juego con una ventana)
+    public static final int DURACION_AVISO_MS = 3000;
+    public static final int MARGEN_AVISO = 28; // distancia al borde de abajo de la ventana
+    public static final Color COLOR_PANEL_AVISO = new Color(150, 40, 40, 225);
+    public static final Color COLOR_TEXTO_AVISO = Color.WHITE;
 
     // Efectos del combate
     public static final int DURACION_EFECTO_MS = 450; // cuánto se ve el efecto de un ataque sobre el animal atacado
