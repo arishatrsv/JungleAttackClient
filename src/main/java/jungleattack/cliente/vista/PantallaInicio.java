@@ -6,6 +6,7 @@ import java.awt.Insets;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import jungleattack.cliente.constantes.ConstantesCliente;
 import jungleattack.cliente.controlador.ControladorJuego;
 

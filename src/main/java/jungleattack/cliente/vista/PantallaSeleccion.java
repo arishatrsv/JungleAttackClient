@@ -106,4 +106,3 @@ public class PantallaSeleccion extends PantallaBase {
         return Character.toUpperCase(nombre.charAt(0)) + nombre.substring(1);
     }
 }
-

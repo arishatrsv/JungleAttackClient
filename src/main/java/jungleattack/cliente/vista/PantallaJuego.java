@@ -28,12 +28,11 @@ import jungleattack.cliente.modelo.ZonaVisible;
 import jungleattack.cliente.recursos.CacheImagenes;
 
 /**
- * Pantalla de la partida. Dibuja el mapa con sus caminos, nodos y nombres de zona, la niebla sobre las zonas
- * que el jugador no ve y, en la zona que está mirando, sus animales, las tazas y las banderas.
+ * Pantalla donde cada jugador elige su animal. Muestra todas las especies con su imagen: las que
+ * ya eligió alguien aparecen desactivadas y marcadas ("Tu elección" u "Oponente").
  *
- * Solo dibuja lo que hay en el modelo: no tiene lógica de juego. Los cambios del modelo los avisa la
- * VentanaPrincipal llamando a dibujo(). Un Timer repinta unas 30 veces por segundo (queda listo para
- * la animación de los movimientos).
+ * Es una pantalla que solo lee del modelo lo que tiene que mostrar, y cuando se pulsa un
+ * animal se lo dice al controlador. El servidor es quien decide si la elección es válida.
  */
 public class PantallaJuego extends PantallaBase implements ObservadorModelo {
 
@@ -44,6 +43,9 @@ public class PantallaJuego extends PantallaBase implements ObservadorModelo {
     private long ultimoCuadro;
     // Rectángulo que el jugador está arrastrando para seleccionar animales (en píxeles); null si no hay.
     private Rectangle rectanguloSeleccion;
+    // Aviso breve (por ejemplo, "Tus animales están muy lejos") y el instante en que apareció; null si no hay.
+    private String aviso;
+    private long instanteAviso;
 
     /**
      * @param controlador a quien se le avisan la selección y las órdenes del ratón (puede ser null en pruebas:
@@ -69,6 +71,23 @@ public class PantallaJuego extends PantallaBase implements ObservadorModelo {
         repaint();
     }
 
+    /**
+     * Muestra un mensaje corto sobre el mapa durante unos segundos. Se usa para los errores de las órdenes
+     * (atacar muy lejos, destino inválido...), que no deben interrumpir la partida con una ventana.
+     */
+    public void mostrarAviso(String texto) {
+        this.aviso = texto;
+        this.instanteAviso = System.currentTimeMillis();
+        repaint();
+    }
+
+    // El aviso que se debe ver en el instante dado, o null si no hay ninguno o ya pasó su tiempo.
+    String consultaAvisoActivo(long ahora) {
+        if (aviso == null || ahora - instanteAviso > ConstantesCliente.DURACION_AVISO_MS) {
+            return null;
+        }
+        return aviso;
+    }
 
     @Override
     public void dibujo() {
@@ -143,6 +162,7 @@ public class PantallaJuego extends PantallaBase implements ObservadorModelo {
             ajusteCalidad(hud);
             dibujoRectanguloSeleccion(hud);
             dibujoPanelInformacion(hud, mapa);
+            dibujoAviso(hud);
         } finally {
             hud.dispose();
         }
@@ -379,6 +399,25 @@ public class PantallaJuego extends PantallaBase implements ObservadorModelo {
         g2.setColor(ConstantesCliente.COLOR_BORDE_RECTANGULO_SELECCION);
         g2.setStroke(new BasicStroke(1.5f));
         g2.draw(rectanguloSeleccion);
+    }
+
+    // Aviso breve abajo y al centro, mientras no pase su tiempo.
+    private void dibujoAviso(Graphics2D g2) {
+        String texto = consultaAvisoActivo(System.currentTimeMillis());
+        if (texto == null) {
+            return;
+        }
+        g2.setFont(g2.getFont().deriveFont(Font.BOLD, (float) ConstantesCliente.TAMANO_FUENTE_HUD));
+        FontMetrics medidas = g2.getFontMetrics();
+        int relleno = ConstantesCliente.RELLENO_HUD * 2;
+        int ancho = medidas.stringWidth(texto) + relleno * 2;
+        int alto = medidas.getHeight() + relleno;
+        int x = (getWidth() - ancho) / 2;
+        int y = getHeight() - alto - ConstantesCliente.MARGEN_AVISO;
+        g2.setColor(ConstantesCliente.COLOR_PANEL_AVISO);
+        g2.fillRoundRect(x, y, ancho, alto, ConstantesCliente.ARCO_HUD, ConstantesCliente.ARCO_HUD);
+        g2.setColor(ConstantesCliente.COLOR_TEXTO_AVISO);
+        g2.drawString(texto, x + relleno, y + relleno / 2 + medidas.getAscent());
     }
 
     // Franja de información arriba a la izquierda: zona que se mira, daño, tazas, bots eliminados, animales propios y seleccionados.

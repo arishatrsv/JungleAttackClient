@@ -1,6 +1,7 @@
 package jungleattack.cliente.constantes;
 
 import java.awt.Color;
+import java.awt.Font;
 
 /**
  * Constantes de la interfaz y la representación visual
@@ -11,7 +12,6 @@ public class ConstantesCliente {
 
     public static final int ANCHO_VENTANA = 1000;
     public static final int ALTO_VENTANA = 700;
-    public static final int VELOCIDAD_MOVIMIENTO = 60;
     public static final int INTERVALO_ANIMACION = 33;
 
     //textos de las pantallas
@@ -38,7 +38,7 @@ public class ConstantesCliente {
     public static final String TEXTO_ERROR_DESTINO_INVALIDO = "Ese destino no está dentro del mapa.";
     public static final String TEXTO_ERROR_OBJETIVO_INVALIDO = "No puedes atacar a ese animal.";
     public static final String TEXTO_ERROR_FUERA_DE_ALCANCE = "Tus animales están muy lejos de ese objetivo. Acércalos primero.";
-
+    
     // Textos de la pantalla de selección de animal
     public static final String TEXTO_SELECCION_TITULO = "Elige tu animal";
     public static final String TEXTO_SELECCION_ELIGE = "Elige un animal de la lista.";

@@ -45,53 +45,46 @@ public class ControladorJuego {
             return;
         }
         modelo.consultaJugadorLocal().actualizacionApodo(apodoLimpio);
-
-        // Conectarse puede tardar, así que lo hago en otro hilo para que la ventana no se congele.
-        Thread hilo = new Thread(() -> {
-            if (!conexion.conexion(this::procesamientoActualizacion)) {
-                // Los cambios al modelo siempre en el hilo de Swing.
-                SwingUtilities.invokeLater(() ->
-                        modelo.actualizacionError(ConstantesProtocolo.MOTIVO_SIN_CONEXION));
-                return;
-            }
-            conexion.envioMensaje(ConversorMensajes.creacionMensaje(
-                    ConstantesProtocolo.CREAR_PARTIDA, ConstantesProtocolo.CAMPO_APODO, apodoLimpio));
-        }, "conexion-crear-partida");
-        hilo.setDaemon(true); //daemon para que no bloquee el cierre de la aplicacion
-        hilo.start();
+        conexionYEnvio(ConversorMensajes.creacionMensaje(
+                ConstantesProtocolo.CREAR_PARTIDA, ConstantesProtocolo.CAMPO_APODO, apodoLimpio));
     }
 
+    // El jugador quiere unirse a la partida de otro con su código. Conecta con el servidor y envía JOIN_MATCH.
     public void unionPartida(String apodo, String codigoPartida) {
-    String apodoLimpio = apodo == null ? "" : apodo.trim();
-    String codigoLimpio = codigoPartida == null ? "" : codigoPartida.trim();
-    if (apodoLimpio.isEmpty()) {
-        modelo.actualizacionError(ConstantesProtocolo.MOTIVO_APODO_INVALIDO);
-        return;
-    }
-    if (codigoLimpio.isEmpty()) {
-        modelo.actualizacionError(ConstantesProtocolo.MOTIVO_PARTIDA_NO_ENCONTRADA);
-        return;
-    }
-    modelo.consultaJugadorLocal().actualizacionApodo(apodoLimpio);
-    Mensaje mensaje = ConversorMensajes.creacionMensaje(
-            ConstantesProtocolo.UNIRSE_PARTIDA,
-            ConstantesProtocolo.CAMPO_APODO, apodoLimpio,
-            ConstantesProtocolo.CAMPO_CODIGO, codigoLimpio);
-    conexionYEnvio(mensaje);
+        String apodoLimpio = apodo == null ? "" : apodo.trim();
+        String codigoLimpio = codigoPartida == null ? "" : codigoPartida.trim();
+        if (apodoLimpio.isEmpty()) {
+            modelo.actualizacionError(ConstantesProtocolo.MOTIVO_APODO_INVALIDO);
+            return;
+        }
+        if (codigoLimpio.isEmpty()) {
+            modelo.actualizacionError(ConstantesProtocolo.MOTIVO_PARTIDA_NO_ENCONTRADA);
+            return;
+        }
+        modelo.consultaJugadorLocal().actualizacionApodo(apodoLimpio);
+        Mensaje mensaje = ConversorMensajes.creacionMensaje(
+                ConstantesProtocolo.UNIRSE_PARTIDA,
+                ConstantesProtocolo.CAMPO_APODO, apodoLimpio,
+                ConstantesProtocolo.CAMPO_CODIGO, codigoLimpio);
+        conexionYEnvio(mensaje);
     }
 
+    // El jugador eligió una especie. Envía SELECT_ANIMAL; el servidor decide si todavía está disponible.
     public void seleccionEspecie(Especie especie) {
-    if (especie == null) {
-        return;
-    }
-    Mensaje mensaje = ConversorMensajes.creacionMensaje(
-            ConstantesProtocolo.SELECCIONAR_ANIMAL,
-            ConstantesProtocolo.CAMPO_ESPECIE,
-            especie.consultaIdentificador());
-    conexionYEnvio(mensaje);
+        if (especie == null) {
+            return;
+        }
+        Mensaje mensaje = ConversorMensajes.creacionMensaje(
+                ConstantesProtocolo.SELECCIONAR_ANIMAL,
+                ConstantesProtocolo.CAMPO_ESPECIE,
+                especie.consultaIdentificador());
+        conexionYEnvio(mensaje);
     }
 
-    //El jugador canceló la espera: se cierra la conexión (el servidor cancela la partida al ver la desconexión)
+    /**
+     * El jugador canceló la espera: se cierra la conexión (el servidor cancela la partida al ver la desconexión)
+     * y se vuelve al inicio. Como la conexión queda cerrada, la próxima vez se abre una nueva.
+     */
     public void cancelarPartida() {
         conexion.cierre();
         modelo.reinicioPartida();
@@ -146,17 +139,25 @@ public class ControladorJuego {
                 ConstantesProtocolo.CAMPO_OBJETIVO, objetivo.consultaIdentificador()));
     }
 
+    /**
+     * Envía un mensaje al servidor. Si ya hay conexión se envía en el momento, así las órdenes salen en el mismo
+     * orden en que el jugador las dio. Si no la hay, se conecta primero en otro hilo para no congelar la ventana.
+     */
     private void conexionYEnvio(Mensaje mensaje) {
+        if (conexion.consultaConectado()) {
+            conexion.envioMensaje(mensaje);
+            return;
+        }
         Thread hilo = new Thread(() -> {
             if (!conexion.conexion(this::procesamientoActualizacion)) {
+                // Los cambios al modelo siempre en el hilo de Swing.
                 SwingUtilities.invokeLater(() ->
                         modelo.actualizacionError(ConstantesProtocolo.MOTIVO_SIN_CONEXION));
                 return;
             }
             conexion.envioMensaje(mensaje);
         }, "conexion-envio");
-
-        hilo.setDaemon(true);
+        hilo.setDaemon(true); // daemon para que no bloquee el cierre de la aplicación
         hilo.start();
     }
 
@@ -199,7 +200,8 @@ public class ControladorJuego {
                 modelo.actualizacionError(motivo);
             }
             case ConstantesProtocolo.DESCONEXION -> {
-                // Se perdió la conexión: aviso y vuelvo a la pantalla de inicio.
+                // Se perdió la conexión: la cierro del todo (así se puede volver a conectar), aviso y vuelvo al inicio.
+                conexion.cierre();
                 modelo.reinicioPartida();
                 modelo.actualizacionError(ConstantesProtocolo.MOTIVO_SIN_CONEXION);
                 modelo.actualizacionEstado(FaseCliente.INICIO);
